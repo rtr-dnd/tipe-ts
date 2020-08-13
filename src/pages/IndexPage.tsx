@@ -3,7 +3,7 @@ import Tipe from '../components/Tipe'
 
 function IndexPage () {
   const tipeProps = {
-    initialText: 'what a brilliant text',
+    initialText: undefined,
     initialTitle: 'what a brilliant title',
     date: ''
   }
@@ -14,6 +14,7 @@ function IndexPage () {
         initialText={tipeProps.initialText}
         initialTitle={tipeProps.initialTitle}
         date={tipeProps.date} />
+      <Tipe />
     </div>
   )
 }

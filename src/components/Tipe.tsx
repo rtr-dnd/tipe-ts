@@ -1,21 +1,50 @@
 import React, { useState } from 'react'
+import Editor from 'rich-markdown-editor'
 
 interface TipeProps {
-  initialText: string,
-  initialTitle: string,
-  date: string
+  initialText?: string,
+  initialTitle?: string,
+  date?: string,
+  readonly?: boolean,
+
+}
+const defaultTipeProps: TipeProps = {
+  initialText: undefined,
+  initialTitle: '',
+  date: '',
+  readonly: false
 }
 
 function Tipe (props: TipeProps) {
-  const [text] = useState<string>(props.initialText)
-  const [title] = useState<string>(props.initialTitle)
-  const [date] = useState<string>(props.date)
+  const [text, setText] = useState<string | undefined>(props.initialText)
+  const [title, setTitle] = useState<string | undefined>(props.initialTitle)
+  const [date, setDate] = useState<string | undefined>(props.date)
+
+  let timeout: any
+  const onTextChange = (valueFunc: () => string) => {
+    clearTimeout(timeout)
+    timeout = setTimeout(() => {
+      setText(valueFunc())
+    }, 500)
+  }
+
+  const onTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setTitle(e.target.value)
+    setDate(String(new Date()))
+  }
 
   return <div>
-    <p>{text}</p>
-    <p>{title}</p>
+    <input type="text" value={title} onChange={onTitleChange} placeholder="Add title" />
     <p>{date}</p>
+    <Editor
+      defaultValue={text}
+      onChange={value => onTextChange(value)}
+      readOnly={props.readonly}
+      placeholder="Jot something down..."
+    />
   </div>
 }
+
+Tipe.defaultProps = defaultTipeProps
 
 export default Tipe
