@@ -1,20 +1,17 @@
 import React from 'react'
-import Tipe from '../components/Tipe'
+import { useSelector } from 'react-redux'
+
+import TipeList from '../components/TipeList'
+import { selectLibrary } from '../redux/slice'
 
 function IndexPage () {
-  const tipeProps = {
-    initialText: undefined,
-    initialTitle: 'what a brilliant title',
-    date: ''
-  }
+  const library = useSelector(selectLibrary)
+
   return (
     <div>
-      This is index
-      <Tipe
-        initialText={tipeProps.initialText}
-        initialTitle={tipeProps.initialTitle}
-        date={tipeProps.date} />
-      <Tipe />
+      <TipeList
+        indexes={[...library.content.keys()]}
+      />
     </div>
   )
 }

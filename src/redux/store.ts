@@ -1,9 +1,9 @@
 import { configureStore, ThunkAction, Action } from '@reduxjs/toolkit'
-import textReducer from './slice'
+import libraryReducer from './slice'
 
 export const store = configureStore({
   reducer: {
-    text: textReducer
+    library: libraryReducer
   }
 })
 
