@@ -12,6 +12,7 @@ import IndexPage from './IndexPage'
 import ThreadPage from './ThreadPage'
 import { editTextOfTipe, selectLibrary } from '../redux/librarySlice'
 
+import * as firebase from 'firebase'
 import { firebaseProject, firestore } from '../firebase'
 
 const Content = styled.div`
@@ -26,17 +27,32 @@ function App () {
 
   useEffect(() => {
     console.log(firebaseProject.name)
-    firestore.collection('dev').get().then((querySnapshot) => {
-      querySnapshot.forEach((doc) => {
-        console.log(doc.id)
-      })
-    })
   }, [])
+
+  const onLogin = () => {
+    const provider = new firebase.auth.GoogleAuthProvider()
+    firebase.auth().signInWithPopup(provider).then((result) => {
+      if (result.credential != null) {
+        const credential = result.credential as firebase.auth.OAuthCredential
+        const token = credential.accessToken
+        const user = result.user
+        console.log(user)
+        if (user != null) {
+          firestore.collection('users').doc(user.uid).get().then((doc) => {
+            if (doc !== undefined) {
+              console.log(doc.data())
+            }
+          })
+        }
+      }
+    })
+  }
 
   return (
     <Router>
       <div className="App">
         <Header />
+        <button onClick={onLogin}>Login</button>
         <Content>
           <Switch>
             <Route path='/thread'>
