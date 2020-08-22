@@ -12,6 +12,8 @@ import IndexPage from './IndexPage'
 import ThreadPage from './ThreadPage'
 import { editTextOfTipe, selectLibrary } from '../redux/librarySlice'
 
+import { firebaseProject, firestore } from '../firebase'
+
 const Content = styled.div`
   width: 100%;
   max-width: 800px;
@@ -23,8 +25,13 @@ function App () {
   const dispatch = useDispatch()
 
   useEffect(() => {
-    console.log('app updated')
-  })
+    console.log(firebaseProject.name)
+    firestore.collection('dev').get().then((querySnapshot) => {
+      querySnapshot.forEach((doc) => {
+        console.log(doc.id)
+      })
+    })
+  }, [])
 
   return (
     <Router>

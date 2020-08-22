@@ -1,9 +1,11 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Editor from 'rich-markdown-editor'
 import { useSelector, useDispatch } from 'react-redux'
 import styled from 'styled-components'
 
 import { removeTipe, editTitleOfTipe, editTextOfTipe, selectLibrary, createThread } from '../redux/librarySlice'
+
+import { firestore } from '../firebase'
 
 const TipeContainer = styled.div`
   margin: 32px 0;
@@ -27,6 +29,14 @@ interface TipeProps {
 function Tipe (props: TipeProps) {
   const library = useSelector(selectLibrary)
   const dispatch = useDispatch()
+
+  useEffect(() => {
+    firestore.collection('dev').get().then((querySnapshot) => {
+      querySnapshot.forEach((doc) => {
+        console.log(doc.id)
+      })
+    })
+  })
 
   const [title, setTitle] = useState<string | undefined>(String(library.tipes[props.index].title))
 
