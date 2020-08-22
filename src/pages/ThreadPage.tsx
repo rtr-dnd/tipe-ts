@@ -1,12 +1,17 @@
 import React from 'react'
+import { useSelector } from 'react-redux'
+
 import TipeList from '../components/TipeList'
+import { selectLibrary } from '../redux/librarySlice'
 
 function ThreadPage () {
+  const library = useSelector(selectLibrary)
+
   return (
     <div>
-      This is thread
       <TipeList
-        indexes={[0, 2]}
+        indexes={[0]}
+        thread={true}
       />
     </div>
   )

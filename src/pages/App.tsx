@@ -10,7 +10,7 @@ import { useSelector, useDispatch } from 'react-redux'
 import Header from '../components/Header'
 import IndexPage from './IndexPage'
 import ThreadPage from './ThreadPage'
-import { editText, selectLibrary } from '../redux/slice'
+import { editTextOfTipe, selectLibrary } from '../redux/librarySlice'
 
 const Content = styled.div`
   width: 100%;

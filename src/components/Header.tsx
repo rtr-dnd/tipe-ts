@@ -1,4 +1,5 @@
 import React from 'react'
+import { Link } from 'react-router-dom'
 import styled from 'styled-components'
 
 import logo from '../assets/logo.svg'
@@ -23,7 +24,10 @@ const Logo = styled.img`
 function Header () {
   return (
     <HeaderBar>
-      <Logo src={logo} alt='logo' />
+      <Link to='/'>
+        <Logo src={logo} alt='logo' />
+      </Link>
+      {String(new Date())}
     </HeaderBar>
   )
 }

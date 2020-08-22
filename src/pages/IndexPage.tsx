@@ -2,7 +2,7 @@ import React from 'react'
 import { useSelector } from 'react-redux'
 
 import TipeList from '../components/TipeList'
-import { selectLibrary } from '../redux/slice'
+import { selectLibrary } from '../redux/librarySlice'
 
 function IndexPage () {
   const library = useSelector(selectLibrary)
@@ -10,7 +10,7 @@ function IndexPage () {
   return (
     <div>
       <TipeList
-        indexes={[...library.content.keys()]}
+        indexes={[...library.tipes.keys()]}
       />
     </div>
   )

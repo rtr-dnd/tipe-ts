@@ -3,7 +3,7 @@ import { useDispatch } from 'react-redux'
 import styled from 'styled-components'
 
 import Tipe from './Tipe'
-import { add } from '../redux/slice'
+import { addTipe } from '../redux/librarySlice'
 
 const List = styled.div`
   min-height: 100vh;
@@ -15,6 +15,7 @@ const List = styled.div`
 
 interface TipeListProps {
   indexes: Array<number>,
+  thread?: boolean,
   readonly?: boolean
 }
 
@@ -29,7 +30,7 @@ function TipeList (props: TipeListProps) {
         readonly={props.readonly}
       />
     ))}
-    <button onClick={() => dispatch(add())}>add Tipe</button>
+    <button onClick={() => dispatch(addTipe())}>add Tipe</button>
   </List>
 }
 
