@@ -27,7 +27,6 @@ function Header () {
       <Link to='/'>
         <Logo src={logo} alt='logo' />
       </Link>
-      {String(new Date())}
     </HeaderBar>
   )
 }

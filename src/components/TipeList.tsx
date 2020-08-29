@@ -3,14 +3,24 @@ import { useDispatch } from 'react-redux'
 import styled from 'styled-components'
 
 import Tipe from './Tipe'
-import { addTipe } from '../redux/librarySlice'
+import { addTipe, pushTipeToFirebase, loadTipeFromFirebase } from '../redux/librarySlice'
 
 const List = styled.div`
   min-height: 100vh;
   display: flex;
-  flex-direction: column;
+  flex-direction: column-reverse;
   justify-content: flex-end;
   padding: 32px 0;
+`
+const Loadbt = styled.button`
+  position: fixed;
+  top: 0;
+  right: 0;
+`
+const Pushbt = styled.button`
+  position: fixed;
+  top: 0;
+  right: 72px;
 `
 
 interface TipeListProps {
@@ -23,6 +33,7 @@ function TipeList (props: TipeListProps) {
   const dispatch = useDispatch()
 
   return <List>
+    <button onClick={() => dispatch(addTipe())}>add Tipe</button>
     {props.indexes.map((i, index) => (
       <Tipe
         key={index}
@@ -30,7 +41,12 @@ function TipeList (props: TipeListProps) {
         readonly={props.readonly}
       />
     ))}
-    <button onClick={() => dispatch(addTipe())}>add Tipe</button>
+    <Loadbt onClick={() => {
+      dispatch(loadTipeFromFirebase())
+    }}>Load</Loadbt>
+    <Pushbt onClick={() => {
+      dispatch(pushTipeToFirebase(0))
+    }}>Push</Pushbt>
   </List>
 }
 

@@ -3,9 +3,7 @@ import Editor from 'rich-markdown-editor'
 import { useSelector, useDispatch } from 'react-redux'
 import styled from 'styled-components'
 
-import { removeTipe, editTitleOfTipe, editTextOfTipe, selectLibrary, createThread } from '../redux/librarySlice'
-
-import { firestore } from '../firebase'
+import { removeTipe, editTitleOfTipe, editTextOfTipe, selectLibrary, createThread, pushTipeToFirebase, removeTipeFromFirebase } from '../redux/librarySlice'
 
 const TipeContainer = styled.div`
   margin: 32px 0;
@@ -30,14 +28,6 @@ function Tipe (props: TipeProps) {
   const library = useSelector(selectLibrary)
   const dispatch = useDispatch()
 
-  useEffect(() => {
-    firestore.collection('dev').get().then((querySnapshot) => {
-      querySnapshot.forEach((doc) => {
-        console.log(doc.id)
-      })
-    })
-  })
-
   const [title, setTitle] = useState<string | undefined>(String(library.tipes[props.index].title))
 
   let textTimeout: ReturnType<typeof setTimeout>
@@ -48,7 +38,8 @@ function Tipe (props: TipeProps) {
         index: props.index,
         value: valueFunc()
       }))
-    }, 500)
+      dispatch(pushTipeToFirebase(props.index))
+    }, 1000)
   }
 
   let titleTimeout: ReturnType<typeof setTimeout>
@@ -62,12 +53,17 @@ function Tipe (props: TipeProps) {
         index: props.index,
         value: changedText
       }))
-    }, 500)
+      dispatch(pushTipeToFirebase(props.index))
+    }, 1000)
   }
+  useEffect(() => {
+    setTitle(library.tipes[props.index].title)
+  }, [library.tipes[props.index].title])
 
   return <TipeContainer>
     <Texts>
       <Editor
+        key={library.tipes[props.index].text}
         defaultValue={library.tipes[props.index].text}
         onChange={value => onTextChange(value)}
         readOnly={props.readonly}
@@ -76,11 +72,15 @@ function Tipe (props: TipeProps) {
     </Texts>
     <Titles>
       {/* <button onClick={() => dispatch(remove(props.index))}>remove this Tipe</button> */}
-      <button onClick={() => { console.log('pressed'); dispatch(createThread(props.index)) }}>Create thread</button>
+      <button onClick={() => {
+        dispatch(removeTipeFromFirebase(library.tipes[props.index].id))
+        dispatch(removeTipe(props.index))
+      }}>Remove this</button>
+      <button onClick={() => { dispatch(createThread(props.index)) }}>Create thread</button>
       <p>
-        {new Date(Number(library.tipes[props.index].date)).getHours()}:
-        {new Date(Number(library.tipes[props.index].date)).getMinutes()}:
-        {new Date(Number(library.tipes[props.index].date)).getSeconds()}
+        {new Date(Number(library.tipes[props.index].editDate)).getHours()}:
+        {new Date(Number(library.tipes[props.index].editDate)).getMinutes()}:
+        {new Date(Number(library.tipes[props.index].editDate)).getSeconds()}
       </p>
       <input type="text" value={title} onChange={onTitleChange} placeholder="Add title" />
     </Titles>
