@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react'
+import React from 'react'
 import Editor from 'rich-markdown-editor'
 import { useSelector, useDispatch } from 'react-redux'
 import styled from 'styled-components'
 
 import { removeTipe, editTitleOfTipe, editTextOfTipe, selectLibrary, createThread, pushTipeToFirebase, removeTipeFromFirebase } from '../redux/librarySlice'
+import TitleInput from './TitleInput'
 
 const TipeContainer = styled.div`
   margin: 32px 0;
@@ -28,37 +29,36 @@ function Tipe (props: TipeProps) {
   const library = useSelector(selectLibrary)
   const dispatch = useDispatch()
 
-  const [title, setTitle] = useState<string | undefined>(String(library.tipes[props.index].title))
-
   let textTimeout: ReturnType<typeof setTimeout>
   const onTextChange = (valueFunc: () => string) => {
+    console.log('clearing:' + textTimeout)
     clearTimeout(textTimeout)
     textTimeout = setTimeout(() => {
+      console.log('firing 2')
       dispatch(editTextOfTipe({
         index: props.index,
         value: valueFunc()
       }))
       dispatch(pushTipeToFirebase(props.index))
     }, 1000)
+    console.log('made:' + textTimeout)
   }
 
   let titleTimeout: ReturnType<typeof setTimeout>
-  let changedText: string
+  // 子コンポーネントを作ってそっちでstate管理をやる
+  // ここでuseState(title, setTitle)とするとsetTitle()を呼び出すたびにこのコンポーネントごとre-renderされる…？
+  // とにかくclearTimeoutがうまくいかない
   const onTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setTitle(e.target.value)
-    changedText = e.target.value
+    e.persist()
     clearTimeout(titleTimeout)
     titleTimeout = setTimeout(() => {
       dispatch(editTitleOfTipe({
         index: props.index,
-        value: changedText
+        value: e.target.value
       }))
       dispatch(pushTipeToFirebase(props.index))
     }, 1000)
   }
-  useEffect(() => {
-    setTitle(library.tipes[props.index].title)
-  }, [library.tipes[props.index].title])
 
   return <TipeContainer>
     <Texts>
@@ -67,6 +67,7 @@ function Tipe (props: TipeProps) {
         defaultValue={library.tipes[props.index].text}
         onChange={value => onTextChange(value)}
         readOnly={props.readonly}
+        autoFocus={true}
         placeholder="Jot something down..."
       />
     </Texts>
@@ -82,7 +83,10 @@ function Tipe (props: TipeProps) {
         {new Date(Number(library.tipes[props.index].editDate)).getMinutes()}:
         {new Date(Number(library.tipes[props.index].editDate)).getSeconds()}
       </p>
-      <input type="text" value={title} onChange={onTitleChange} placeholder="Add title" />
+      <TitleInput
+        key={library.tipes[props.index].title}
+        defaultValue={library.tipes[props.index].title}
+        onTitleChange={onTitleChange} />
     </Titles>
   </TipeContainer>
 }

@@ -3,7 +3,7 @@ import { useDispatch } from 'react-redux'
 import styled from 'styled-components'
 
 import Tipe from './Tipe'
-import { addTipe, pushTipeToFirebase, loadTipeFromFirebase } from '../redux/librarySlice'
+import { addTipe, loadTipeFromFirebase } from '../redux/librarySlice'
 
 const List = styled.div`
   min-height: 100vh;
@@ -16,11 +16,6 @@ const Loadbt = styled.button`
   position: fixed;
   top: 0;
   right: 0;
-`
-const Pushbt = styled.button`
-  position: fixed;
-  top: 0;
-  right: 72px;
 `
 
 interface TipeListProps {
@@ -44,9 +39,6 @@ function TipeList (props: TipeListProps) {
     <Loadbt onClick={() => {
       dispatch(loadTipeFromFirebase())
     }}>Load</Loadbt>
-    <Pushbt onClick={() => {
-      dispatch(pushTipeToFirebase(0))
-    }}>Push</Pushbt>
   </List>
 }
 
