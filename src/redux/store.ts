@@ -1,9 +1,11 @@
 import { configureStore } from '@reduxjs/toolkit'
 import libraryReducer from './librarySlice'
+import viewReducer from './viewSlice'
 
 export const store = configureStore({
   reducer: {
-    library: libraryReducer
+    library: libraryReducer,
+    view: viewReducer
   }
 })
 

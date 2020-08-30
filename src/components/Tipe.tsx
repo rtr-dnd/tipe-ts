@@ -1,14 +1,17 @@
-import React from 'react'
-import Editor from 'rich-markdown-editor'
+import React, { useEffect, useRef, useContext } from 'react'
+import Editor from 'tipe-markdown-editor'
 import { useSelector, useDispatch } from 'react-redux'
-import styled from 'styled-components'
+import styled, { ThemeContext } from 'styled-components'
 
+import { editorLight, editorDark } from '../assets/colors'
 import { removeTipe, editTitleOfTipe, editTextOfTipe, selectLibrary, createThread, pushTipeToFirebase, removeTipeFromFirebase } from '../redux/librarySlice'
 import TitleInput from './TitleInput'
 
 const TipeContainer = styled.div`
-  margin: 32px 0;
+  padding: 48px 32px;
   display: flex;
+  border-bottom: 1px solid ${props => props.theme.border};
+  transition: 0.5s;
 `
 const Texts = styled.div`
   flex-grow: 1;
@@ -29,19 +32,25 @@ function Tipe (props: TipeProps) {
   const library = useSelector(selectLibrary)
   const dispatch = useDispatch()
 
+  const editorRef = useRef<Editor>(null)
+  useEffect(() => {
+    if (editorRef && editorRef.current) {
+      editorRef.current.focusAtEnd()
+    }
+  }, [])
+
+  const themeContext = useContext(ThemeContext)
+
   let textTimeout: ReturnType<typeof setTimeout>
   const onTextChange = (valueFunc: () => string) => {
-    console.log('clearing:' + textTimeout)
     clearTimeout(textTimeout)
     textTimeout = setTimeout(() => {
-      console.log('firing 2')
       dispatch(editTextOfTipe({
         index: props.index,
         value: valueFunc()
       }))
       dispatch(pushTipeToFirebase(props.index))
     }, 1000)
-    console.log('made:' + textTimeout)
   }
 
   let titleTimeout: ReturnType<typeof setTimeout>
@@ -63,9 +72,11 @@ function Tipe (props: TipeProps) {
   return <TipeContainer>
     <Texts>
       <Editor
+        ref={editorRef}
         key={library.tipes[props.index].text}
         defaultValue={library.tipes[props.index].text}
         onChange={value => onTextChange(value)}
+        theme={themeContext.isDark ? editorDark : editorLight}
         readOnly={props.readonly}
         autoFocus={true}
         placeholder="Jot something down..."

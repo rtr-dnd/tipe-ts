@@ -1,8 +1,9 @@
-import React from 'react'
+import React, { useContext } from 'react'
 import { Link } from 'react-router-dom'
-import styled from 'styled-components'
+import styled, { ThemeContext } from 'styled-components'
 
-import logo from '../assets/logo.svg'
+import logoLight from '../assets/logo-light.svg'
+import logoDark from '../assets/logo-dark.svg'
 
 const HeaderBar = styled.div`
   display: flex;
@@ -13,7 +14,8 @@ const HeaderBar = styled.div`
   z-index: 10;
   padding: 24px 48px;
   align-items: center;
-  background-color: rgba(255, 255, 255, 0.95);
+  background-color: ${props => props.theme.backgroundTransparent};
+  transition: 0.5s;
 `
 const Logo = styled.img`
   display: block;
@@ -22,10 +24,12 @@ const Logo = styled.img`
 `
 
 function Header () {
+  const themeContext = useContext(ThemeContext)
+
   return (
     <HeaderBar>
       <Link to='/'>
-        <Logo src={logo} alt='logo' />
+        <Logo src={themeContext.isDark ? logoDark : logoLight} alt='logo' />
       </Link>
     </HeaderBar>
   )
