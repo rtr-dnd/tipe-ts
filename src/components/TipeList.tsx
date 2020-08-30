@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import styled from 'styled-components'
 
 import Tipe from './Tipe'
-import { selectLibrary, addTipe, loadTipeFromFirebase } from '../redux/librarySlice'
+import { selectLibrary, addNewTipe, loadTipeFromFirebase } from '../redux/librarySlice'
 
 const List = styled.div`
   min-height: 100vh;
@@ -30,7 +30,7 @@ function TipeList (props: TipeListProps) {
   const library = useSelector(selectLibrary)
 
   return <List>
-    <button onClick={() => dispatch(addTipe())}>add Tipe</button>
+    <button onClick={() => dispatch(addNewTipe())}>add Tipe</button>
     {props.indexes.map((i, index) => (
       <Tipe
         key={library.tipes[i].id}

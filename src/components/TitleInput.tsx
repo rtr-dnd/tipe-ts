@@ -1,4 +1,19 @@
 import React, { useEffect, useState } from 'react'
+import styled from 'styled-components'
+
+const Input = styled.input`
+  border: none;
+  outline: none;
+  font-size: 18px;
+  color: ${props => props.theme.textGrey};
+  background-color: ${props => props.theme.background};
+  transition: 0.5s;
+  text-align: right;
+  &::placeholder {
+    color: ${props => props.theme.border};
+    transition: 0.5s;
+  }
+`
 
 interface TitleInputProps {
   defaultValue: string | undefined,
@@ -13,7 +28,7 @@ function TitleInput (props: TitleInputProps) {
     props.onTitleChange(e)
   }
 
-  return <input
+  return <Input
     type="text"
     autoFocus
     value={title}

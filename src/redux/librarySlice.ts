@@ -1,10 +1,10 @@
+// eslint-disable-next-line
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
+// eslint-disable-next-line
 import { Dispatch } from 'redux'
+// eslint-disable-next-line
 import { RootState } from './store'
 import { v4 as uuidv4 } from 'uuid'
-
-import * as firebase from 'firebase'
-import { firebaseProject, firestore } from '../firebase'
 
 interface TipeState {
     id: string,
@@ -13,6 +13,7 @@ interface TipeState {
     text: string,
     createDate: number | undefined,
     editDate: number | undefined,
+    lastSessionId: string,
     thread: string | null,
 }
 
@@ -24,6 +25,7 @@ function newTipeState () : TipeState {
     text: '',
     createDate: new Date().getTime(),
     editDate: new Date().getTime(),
+    lastSessionId: '',
     thread: null
   }
 }
@@ -45,13 +47,19 @@ function newThreadState (parent: string) : ThreadState {
 }
 
 interface LibraryState {
+  sessionId: string,
+  sessionBeginDate: number,
   tipes: Array<TipeState>,
   threads: Array<ThreadState>
 }
 
-const initialLibraryState: LibraryState = {
-  tipes: [],
-  threads: []
+function initialLibraryState () : LibraryState {
+  return {
+    sessionId: uuidv4(),
+    sessionBeginDate: new Date().getTime(),
+    tipes: [],
+    threads: []
+  }
 }
 
 interface indexPayload {
@@ -61,20 +69,31 @@ interface indexPayload {
 
 export const librarySlice = createSlice({
   name: 'library',
-  initialState: initialLibraryState,
+  initialState: initialLibraryState(),
   reducers: {
-    addTipe: (state) => {
-      // 新しい要素を先頭に追加していく
+    addTipe: (state, action: PayloadAction<TipeState>) => {
+      // 既存要素を先頭に追加していく (別端末で新しく要素を作成した場合)
+      if (action && action.payload) {
+        state.tipes.unshift(action.payload)
+      }
+    },
+    addNewTipe: (state) => {
+      // 新しい要素を先頭に追加していく（この端末で新しく要素を作成した場合）
       state.tipes.unshift(newTipeState())
     },
     loadTipe: (state, action: PayloadAction<TipeState>) => {
       // Firebaseの同期用 古い要素を後ろに追加していく すでにあるならアップデート
       const tmp = state.tipes.findIndex((element) => element.id === action.payload.id)
       if (tmp !== -1) {
-        state.tipes[tmp] = action.payload
+        if (action.payload.editDate !== state.tipes[tmp].editDate) {
+          state.tipes[tmp] = action.payload
+        }
       } else {
         state.tipes.push(action.payload)
       }
+    },
+    refreshSessionIdOfTipe: (state, action: PayloadAction<number>) => {
+      state.tipes[action.payload].lastSessionId = state.sessionId
     },
     removeTipe: (state, action: PayloadAction<number>) => {
       state.tipes.splice(action.payload, 1)
@@ -82,13 +101,17 @@ export const librarySlice = createSlice({
     editTextOfTipe: (state, action: PayloadAction<indexPayload>) => {
       state.tipes[action.payload.index].text = action.payload.value
       state.tipes[action.payload.index].editDate = new Date().getTime()
+      state.tipes[action.payload.index].lastSessionId = state.sessionId
     },
     editTitleOfTipe: (state, action: PayloadAction<indexPayload>) => {
       state.tipes[action.payload.index].title = action.payload.value
       state.tipes[action.payload.index].editDate = new Date().getTime()
+      state.tipes[action.payload.index].lastSessionId = state.sessionId
     },
     editThreadOfTipe: (state, action: PayloadAction<indexPayload>) => {
       state.tipes[action.payload.index].thread = action.payload.value
+      state.tipes[action.payload.index].editDate = new Date().getTime()
+      state.tipes[action.payload.index].lastSessionId = state.sessionId
     },
     createThread: (state, action: PayloadAction<number>) => {
       if (!state.tipes[action.payload].thread) {
@@ -102,7 +125,9 @@ export const librarySlice = createSlice({
 
 export const {
   addTipe,
+  addNewTipe,
   loadTipe,
+  refreshSessionIdOfTipe,
   removeTipe,
   editTextOfTipe,
   editTitleOfTipe,
@@ -112,7 +137,7 @@ export const {
 export const selectLibrary = (state: RootState) => state.library
 
 export const loadTipeFromFirebase = () => {
-  return (dispatch: Dispatch<any>) => {
+  return (dispatch: Dispatch<any>, getState: () => {library: LibraryState}) => {
     firestore.collection('ver2users').doc('sZYKVb4GeOBrj69E28sB').collection('tipes')
       .where('is', '==', 'tipe')
       .orderBy('createDate', 'desc')
@@ -120,24 +145,28 @@ export const loadTipeFromFirebase = () => {
       .onSnapshot((querySnapshot) => {
         querySnapshot.docChanges().forEach(change => {
           if (change.type !== 'removed') {
-            dispatch(loadTipe(change.doc.data() as any))
+            const library = getState().library
+            if (change.type === 'added') {
+              if (change.doc.data().editDate > library.sessionBeginDate &&
+              change.doc.data().lastSessionId !== library.sessionId) {
+                // 別端末で追加された要素
+                dispatch(addTipe(change.doc.data() as TipeState))
+              } else {
+                // ただ読み込んでるだけ
+                dispatch(loadTipe(change.doc.data() as TipeState))
+              }
+            } else {
+              dispatch(loadTipe(change.doc.data() as TipeState))
+            }
+            const tmp = library.tipes.findIndex((element) => element.id === change.doc.data().id)
+            if (tmp !== -1) {
+              setTimeout(() => {
+                dispatch(refreshSessionIdOfTipe(tmp))
+              }, 500)
+            }
           }
         })
       })
-    /*
-    firestore.collection('ver2users').doc('sZYKVb4GeOBrj69E28sB').collection('tipes').doc('meta')
-      .get().then((meta) => {
-        // eslint-disable-next-line no-unused-expressions
-        meta.data()?.structure.slice().reverse().forEach((structureName: string, structureIndex: number) => {
-          // ↑structureは古いものが先頭に並んでいるので、逆にして新しいものから読み込み
-          firestore.collection('ver2users').doc('sZYKVb4GeOBrj69E28sB').collection('tipes')
-            .doc(structureName).onSnapshot((thisTipe) => {
-              thisTipe.docChanges()
-              dispatch(loadTipe(thisTipe.data() as any))
-            })
-        })
-      })
-      */
   }
 }
 export const pushTipeToFirebase = (index: number) => {

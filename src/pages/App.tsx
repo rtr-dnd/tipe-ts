@@ -38,7 +38,7 @@ function App () {
   const library = useSelector(selectLibrary)
   const dispatch = useDispatch()
 
-  const [isDark, setIsDark] = useState<boolean>(true)
+  const [isDark, setIsDark] = useState<boolean>(false)
 
   useEffect(() => {
     console.log(firebaseProject.name)
@@ -69,7 +69,10 @@ function App () {
         <AppRoot>
           <Header />
           <Login onClick={onLogin}>Login</Login>
-          <Dark onClick={() => setIsDark(!isDark)}>Dark</Dark>
+          <Dark onClick={() => {
+            setIsDark(!isDark)
+            document.body.classList.toggle('dark')
+          }}>Dark</Dark>
           <Content>
             <Switch>
               <Route path='/thread'>

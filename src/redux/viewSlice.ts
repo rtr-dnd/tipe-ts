@@ -1,6 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 import { RootState } from './store'
-import { create } from 'domain'
 
 interface ViewState {
   isDark: boolean

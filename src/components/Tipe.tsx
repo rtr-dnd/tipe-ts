@@ -1,11 +1,11 @@
-import React, { useEffect, useRef, useContext } from 'react'
+import React, { useEffect, useRef } from 'react'
 import Editor from 'tipe-markdown-editor'
 import { useSelector, useDispatch } from 'react-redux'
-import styled, { ThemeContext } from 'styled-components'
+import styled from 'styled-components'
 
-import { editorLight, editorDark } from '../assets/colors'
 import { removeTipe, editTitleOfTipe, editTextOfTipe, selectLibrary, createThread, pushTipeToFirebase, removeTipeFromFirebase } from '../redux/librarySlice'
 import TitleInput from './TitleInput'
+import IconAddThread from './icons/IconAddThread'
 
 const TipeContainer = styled.div`
   padding: 48px 32px;
@@ -15,12 +15,58 @@ const TipeContainer = styled.div`
 `
 const Texts = styled.div`
   flex-grow: 1;
+  flex-shrink: 1;
+  p, div {
+    font-size: 14px;
+    line-height: 1.7em;
+    transition: 0.5s;
+    background: transparent;
+    color: ${props => props.theme.text};
+    &.placeholder:before {
+      color: ${props => props.theme.textGrey};
+      transition: 0.5s;
+    }
+  }
+  
 `
 const Titles = styled.div`
-  width: 30%;
+  width: 35%;
+  flex-shrink: 0;
+  padding-left: 16px;
   display: flex;
   flex-direction: column;
   text-align: right;
+`
+const Spacer = styled.div`
+  flex-grow: 1;
+`
+const Sticky = styled.div`
+  position: sticky;
+  bottom: 48px;
+`
+const ModifiedDate = styled.p`
+  color: ${props => props.theme.textGrey};
+  transition: 0.5s;
+  font-size: 13px;
+  margin: 24px 0 12px 0;
+`
+const Divider = styled.div`
+  display: inline-block;
+  width: 32px;
+  border-bottom: 1px solid ${props => props.theme.border};
+`
+const CreateThread = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  font-size: 13px;
+  color: ${props => props.theme.textGrey};
+  margin-bottom: 12px;
+  transition: 0.5s;
+  p {
+    padding: 0;
+    margin: 0;
+    padding-right: 8px;
+  }
 `
 
 interface TipeProps {
@@ -38,8 +84,6 @@ function Tipe (props: TipeProps) {
       editorRef.current.focusAtEnd()
     }
   }, [])
-
-  const themeContext = useContext(ThemeContext)
 
   let textTimeout: ReturnType<typeof setTimeout>
   const onTextChange = (valueFunc: () => string) => {
@@ -73,31 +117,37 @@ function Tipe (props: TipeProps) {
     <Texts>
       <Editor
         ref={editorRef}
-        key={library.tipes[props.index].text}
+        key={library.tipes[props.index].lastSessionId}
         defaultValue={library.tipes[props.index].text}
         onChange={value => onTextChange(value)}
-        theme={themeContext.isDark ? editorDark : editorLight}
         readOnly={props.readonly}
         autoFocus={true}
         placeholder="Jot something down..."
       />
     </Texts>
     <Titles>
-      {/* <button onClick={() => dispatch(remove(props.index))}>remove this Tipe</button> */}
-      <button onClick={() => {
-        dispatch(removeTipeFromFirebase(library.tipes[props.index].id))
-        dispatch(removeTipe(props.index))
-      }}>Remove this</button>
-      <button onClick={() => { dispatch(createThread(props.index)) }}>Create thread</button>
-      <p>
-        {new Date(Number(library.tipes[props.index].editDate)).getHours()}:
-        {new Date(Number(library.tipes[props.index].editDate)).getMinutes()}:
-        {new Date(Number(library.tipes[props.index].editDate)).getSeconds()}
-      </p>
-      <TitleInput
-        key={library.tipes[props.index].title}
-        defaultValue={library.tipes[props.index].title}
-        onTitleChange={onTitleChange} />
+      <Spacer></Spacer>
+      <Sticky>
+        {/* <button onClick={() => {
+          dispatch(removeTipeFromFirebase(library.tipes[props.index].id))
+          dispatch(removeTipe(props.index))
+        }}>Remove this</button> */}
+        <CreateThread
+          onClick={() => { dispatch(createThread(props.index)) }}>
+          <p>Create Thread</p>
+          <IconAddThread />
+        </CreateThread>
+        <Divider />
+        <ModifiedDate>
+          {new Date(Number(library.tipes[props.index].editDate)).getHours()}:
+          {new Date(Number(library.tipes[props.index].editDate)).getMinutes()}:
+          {new Date(Number(library.tipes[props.index].editDate)).getSeconds()}
+        </ModifiedDate>
+        <TitleInput
+          key={library.tipes[props.index].title}
+          defaultValue={library.tipes[props.index].title}
+          onTitleChange={onTitleChange} />
+      </Sticky>
     </Titles>
   </TipeContainer>
 }

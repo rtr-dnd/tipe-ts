@@ -1,6 +1,3 @@
-import { theme } from 'rich-markdown-editor'
-const importedTheme = require('rich-markdown-editor/dist/theme')
-
 export interface Theme {
   isDark: boolean,
   text: string,
@@ -26,18 +23,4 @@ export const dark: Theme = {
   border: 'rgba(255, 255, 255, 0.25)',
   background: '#000',
   backgroundTransparent: 'rgba(0, 0, 0, 0.9)'
-}
-
-export const editorLight: typeof theme = {
-  ...importedTheme.light,
-  background: light.background,
-  text: light.text,
-  cursor: light.text
-}
-
-export const editorDark: typeof theme = {
-  ...importedTheme.dark,
-  background: dark.background,
-  text: dark.text,
-  cursor: dark.text
 }
