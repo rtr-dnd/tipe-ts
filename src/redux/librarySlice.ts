@@ -120,6 +120,7 @@ export const librarySlice = createSlice({
         const currentThread = newThreadState(state.tipes[action.payload].id)
         state.threads.push(currentThread)
         state.tipes[action.payload].thread = currentThread.id
+        state.tipes[action.payload].lastSessionId = state.sessionId
       }
     }
   }

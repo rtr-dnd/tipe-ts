@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react'
 import {
   BrowserRouter as Router,
   Switch,
-  Route
+  Route,
+  useLocation
 } from 'react-router-dom'
+import { TransitionGroup, CSSTransition } from 'react-transition-group'
 import styled, { ThemeProvider } from 'styled-components'
 
 import { light, dark } from '../assets/colors'
@@ -23,6 +25,21 @@ const Content = styled.div`
   width: 100%;
   max-width: 800px;
   margin: 0 auto;
+  .fade-enter {
+      opacity: 0.01;
+  }
+  .fade-enter.fade-enter-active {
+      opacity: 1;
+      transition: opacity 300ms ease-in;
+  }
+  .fade-exit {
+      opacity: 1;
+  }
+    
+  .fade-exit.fade-exit-active {
+      opacity: 0.01;
+      transition: opacity 500ms ease-in;
+  }
 `
 const Login = styled.button`
   position: fixed;
@@ -66,18 +83,7 @@ function App () {
             setIsDark(!isDark)
             document.body.classList.toggle('dark')
           }}>Dark</Dark>
-          <Content>
-            <Switch>
-              <Route path='/thread'>
-                <ThreadPage />
-              </Route>
-              <Route path='/about'></Route>
-              <Route path='/get-started'></Route>
-              <Route path='/'>
-                <IndexPage />
-              </Route>
-            </Switch>
-          </Content>
+          <AnimatedApp />
         </AppRoot>
       </ThemeProvider>
     </Router>
@@ -85,3 +91,30 @@ function App () {
 }
 
 export default App
+
+function AnimatedApp () {
+  const location = useLocation()
+
+  return (
+    <Content>
+      <TransitionGroup>
+        <CSSTransition
+          key={location.key}
+          timeout={{ enter: 300, exit: 300 }}
+          classNames={'fade'}
+        >
+          <Switch location={location}>
+            <Route path='/thread/:threadId'>
+              <ThreadPage />
+            </Route>
+            <Route path='/about'></Route>
+            <Route path='/get-started'></Route>
+            <Route exact path='/'>
+              <IndexPage />
+            </Route>
+          </Switch>
+        </CSSTransition>
+      </TransitionGroup>
+    </Content>
+  )
+}

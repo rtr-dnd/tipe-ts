@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import Editor from 'tipe-markdown-editor'
 import { useSelector, useDispatch } from 'react-redux'
 import styled from 'styled-components'
@@ -6,6 +6,7 @@ import styled from 'styled-components'
 import { removeTipe, editTitleOfTipe, editTextOfTipe, selectLibrary, createThread, pushTipeToFirebase, removeTipeFromFirebase } from '../redux/librarySlice'
 import TitleInput from './TitleInput'
 import IconAddThread from './icons/IconAddThread'
+import { Redirect } from 'react-router-dom'
 
 const TipeContainer = styled.div`
   padding: 48px 32px;
@@ -55,13 +56,14 @@ const Divider = styled.div`
   width: 32px;
   border-bottom: 1px solid ${props => props.theme.border};
 `
-const CreateThread = styled.div`
+const ButtonWithIcon = styled.div`
   display: flex;
   justify-content: flex-end;
   font-size: 13px;
   color: ${props => props.theme.textGrey};
   margin-bottom: 12px;
   transition: 0.5s;
+  cursor: pointer;
   p {
     padding: 0;
     margin: 0;
@@ -110,10 +112,18 @@ function Tipe (props: TipeProps) {
         value: e.target.value
       }))
       dispatch(pushTipeToFirebase(props.index))
-    }, 1000)
+    }, 100)
+  }
+
+  const [redirect, setRedirect] = useState<boolean>(false)
+  const [redirectPath, setRedirectPath] = useState<string>('/')
+  const handleRedirect = (path: string) => {
+    setRedirectPath(path)
+    setRedirect(true)
   }
 
   return <TipeContainer>
+    {redirect && <Redirect push to={redirectPath} />}
     <Texts>
       <Editor
         ref={editorRef}
@@ -126,17 +136,23 @@ function Tipe (props: TipeProps) {
       />
     </Texts>
     <Titles>
-      <Spacer></Spacer>
+      <Spacer />
       <Sticky>
         {/* <button onClick={() => {
           dispatch(removeTipeFromFirebase(library.tipes[props.index].id))
           dispatch(removeTipe(props.index))
         }}>Remove this</button> */}
-        <CreateThread
-          onClick={() => { dispatch(createThread(props.index)) }}>
-          <p>Create Thread</p>
-          <IconAddThread />
-        </CreateThread>
+        {library.tipes[props.index].thread === null
+          ? <ButtonWithIcon
+            onClick={() => { dispatch(createThread(props.index)) }}>
+            <p>Create thread</p>
+            <IconAddThread />
+          </ButtonWithIcon>
+          : <ButtonWithIcon
+            onClick={() => handleRedirect('/thread/' + library.tipes[props.index].thread)}>
+            <p>Go to thread</p>
+          </ButtonWithIcon>
+        }
         <Divider />
         <ModifiedDate>
           {new Date(Number(library.tipes[props.index].editDate)).getHours()}:
