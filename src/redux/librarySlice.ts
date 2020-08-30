@@ -6,6 +6,8 @@ import { Dispatch } from 'redux'
 import { RootState } from './store'
 import { v4 as uuidv4 } from 'uuid'
 
+import { firestore } from '../firebase'
+
 interface TipeState {
     id: string,
     is: 'tipe',

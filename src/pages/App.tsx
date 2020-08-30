@@ -5,13 +5,11 @@ import {
   Route
 } from 'react-router-dom'
 import styled, { ThemeProvider } from 'styled-components'
-import { useSelector, useDispatch } from 'react-redux'
 
 import { light, dark } from '../assets/colors'
 import Header from '../components/Header'
 import IndexPage from './IndexPage'
 import ThreadPage from './ThreadPage'
-import { editTextOfTipe, selectLibrary } from '../redux/librarySlice'
 
 import * as firebase from 'firebase'
 import { firebaseProject, firestore } from '../firebase'
@@ -35,9 +33,6 @@ const Dark = styled.button`
 `
 
 function App () {
-  const library = useSelector(selectLibrary)
-  const dispatch = useDispatch()
-
   const [isDark, setIsDark] = useState<boolean>(false)
 
   useEffect(() => {
@@ -48,8 +43,6 @@ function App () {
     const provider = new firebase.auth.GoogleAuthProvider()
     firebase.auth().signInWithPopup(provider).then((result) => {
       if (result.credential != null) {
-        const credential = result.credential as firebase.auth.OAuthCredential
-        const token = credential.accessToken
         const user = result.user
         console.log(user)
         if (user != null) {
