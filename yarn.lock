@@ -11545,9 +11545,9 @@ tiny-warning@^1.0.0, tiny-warning@^1.0.3:
   integrity sha512-lBN9zLN/oAf68o3zNXYrdCt1kP8WsiGW8Oo2ka41b2IM5JL/S1CTyX1rW0mb/zSuJun0ZUrDxx4sqvYS2FWzPA==
 
 tipe-markdown-editor@^11.0.0:
-  version "11.0.4"
-  resolved "https://registry.yarnpkg.com/tipe-markdown-editor/-/tipe-markdown-editor-11.0.4.tgz#ff543095152b0371b049d735b71370cc53c0c475"
-  integrity sha512-5g0N2EvrG1R6zsRNzo5KOZBZD+xOe7uBhcqFOoYAyme9whmL7UzjjKyRsrkY2QA7ciJUXDOsDEzVgy7ohl7hyg==
+  version "11.0.5"
+  resolved "https://registry.yarnpkg.com/tipe-markdown-editor/-/tipe-markdown-editor-11.0.5.tgz#51978c61ffd64ef529b5809b3ae719fe605c4c9e"
+  integrity sha512-iu2aQsNg2+nBZ2dO9fuZlCmJmk0a47ig7XKpsdHNo+7aijfdhkysoLvpIEzLaOeZZcdbWdca9UOd2dLH40HRFg==
   dependencies:
     copy-to-clipboard "^3.0.8"
     lodash "^4.17.11"

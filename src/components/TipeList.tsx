@@ -18,6 +18,14 @@ const Loadbt = styled.button`
   top: 0;
   right: 0;
 `
+const Addbt = styled.div`
+  padding: 32px 0;
+  cursor: pointer;
+  color: ${props => props.theme.textGrey};
+  transition: 0.5s;
+  font-size: 13px;
+  text-align: center;
+`
 
 interface TipeListProps {
   indexes: Array<number>,
@@ -30,7 +38,7 @@ function TipeList (props: TipeListProps) {
   const library = useSelector(selectLibrary)
 
   return <List>
-    <button onClick={() => dispatch(addNewTipe())}>add Tipe</button>
+    <Addbt onClick={() => dispatch(addNewTipe())}>add Tipe</Addbt>
     {props.indexes.map((i, index) => (
       <Tipe
         key={library.tipes[i].id}
