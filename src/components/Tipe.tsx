@@ -32,7 +32,7 @@ const Texts = styled.div`
   margin: 48px 0;
   p, div {
     font-size: 14px;
-    line-height: 1.7em;
+    line-height: 1.8em;
     transition: 0.5s;
     background: transparent;
     color: ${props => props.theme.text};
@@ -53,8 +53,7 @@ const Titles = styled.div`
   align-items: flex-end;
   .hiding {
     transition: height 0.3s, opacity 0.3s, margin 0.3s;
-    opacity: 0;
-    height: 0;
+    opacity: 0.3;
   }
   &:hover {
     .hiding {
@@ -78,10 +77,11 @@ const Sticky = styled.div`
   bottom: 48px;
 `
 const ModifiedDate = styled.p`
-  color: ${props => props.theme.border};
+  color: ${props => props.theme.textGrey};
   transition: 0.5s;
   font-size: 13px;
-  margin: 0;
+      margin: 24px 0 12px 0;
+      height: 1em;
 `
 const Divider = styled.div`
   display: block;
@@ -97,6 +97,8 @@ const ButtonWithIcon = styled.div`
   color: ${props => props.theme.textGrey};
   transition: color 0.1s;
   cursor: pointer;
+      margin-bottom: 24px;
+      height: 1em;
   p {
     padding: 0;
     margin: 0;
@@ -194,7 +196,7 @@ function Tipe (props: TipeProps) {
               dispatch(pushThreadToFirebase(0))
               handleRedirect('/thread/' + newThread.id)
             }}>
-            <p>Reply</p>
+            <p>スレッドで続ける</p>
             <IconAddThread />
           </ButtonWithIcon>
           : <ButtonWithIcon
@@ -205,7 +207,7 @@ function Tipe (props: TipeProps) {
         }
         <ButtonWithIcon
           className={'hiding button-with-icon'}>
-          <p>Add to existing thread</p>
+          <p>既存のスレッドに追加</p>
           <IconThreadMore />
         </ButtonWithIcon>
         <Divider className={'hiding'} />
