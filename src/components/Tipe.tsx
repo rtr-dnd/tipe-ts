@@ -3,7 +3,18 @@ import Editor from 'tipe-markdown-editor'
 import { useSelector, useDispatch } from 'react-redux'
 import styled from 'styled-components'
 
-import { removeTipe, editTitleOfTipe, editTextOfTipe, selectLibrary, createThread, pushTipeToFirebase, removeTipeFromFirebase } from '../redux/librarySlice'
+import {
+  newThreadState,
+  addThread,
+  removeTipe,
+  editTitleOfTipe,
+  editTextOfTipe,
+  selectLibrary,
+  pushTipeToFirebase,
+  removeTipeFromFirebase,
+  pushThreadToFirebase,
+  editThreadOfTipe
+} from '../redux/librarySlice'
 import TitleInput from './TitleInput'
 import IconAddThread from './icons/IconAddThread'
 import { Redirect } from 'react-router-dom'
@@ -144,7 +155,13 @@ function Tipe (props: TipeProps) {
         }}>Remove this</button> */}
         {library.tipes[props.index].thread === null
           ? <ButtonWithIcon
-            onClick={() => { dispatch(createThread(props.index)) }}>
+            onClick={() => {
+              const newThread = newThreadState(library.tipes[props.index].id)
+              dispatch(addThread(newThread))
+              dispatch(editThreadOfTipe({ index: props.index, value: newThread.id }))
+              dispatch(pushThreadToFirebase(0))
+              handleRedirect('/thread/' + newThread.id)
+            }}>
             <p>Create thread</p>
             <IconAddThread />
           </ButtonWithIcon>

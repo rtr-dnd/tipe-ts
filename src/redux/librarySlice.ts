@@ -11,15 +11,15 @@ import { firestore } from '../firebase'
 interface TipeState {
     id: string,
     is: 'tipe',
-    title: string | undefined,
+    title: string,
     text: string,
-    createDate: number | undefined,
-    editDate: number | undefined,
+    createDate: number,
+    editDate: number,
     lastSessionId: string,
     thread: string | null,
 }
 
-function newTipeState () : TipeState {
+export function newTipeState () : TipeState {
   return {
     id: uuidv4(),
     is: 'tipe',
@@ -35,16 +35,22 @@ function newTipeState () : TipeState {
 interface ThreadState {
   id: string,
   is: 'thread',
-  title: string | undefined,
-  children: Array<string>
+  title: string,
+  children: Array<string>,
+  createDate: number,
+  editDate: number,
+  lastSessionId: string
 }
 
-function newThreadState (parent: string) : ThreadState {
+export function newThreadState (parent: string) : ThreadState {
   return {
     id: uuidv4(),
     is: 'thread',
     title: '',
-    children: [parent]
+    children: [parent],
+    createDate: new Date().getTime(),
+    editDate: new Date().getTime(),
+    lastSessionId: ''
   }
 }
 
@@ -69,19 +75,21 @@ interface indexPayload {
   value: string
 }
 
+interface threadPayload {
+  threadIndex: number,
+  childIndex: number,
+  value: string
+}
+
 export const librarySlice = createSlice({
   name: 'library',
   initialState: initialLibraryState(),
   reducers: {
     addTipe: (state, action: PayloadAction<TipeState>) => {
-      // 既存要素を先頭に追加していく (別端末で新しく要素を作成した場合)
+      // 既存要素を先頭に追加していく
       if (action && action.payload) {
         state.tipes.unshift(action.payload)
       }
-    },
-    addNewTipe: (state) => {
-      // 新しい要素を先頭に追加していく（この端末で新しく要素を作成した場合）
-      state.tipes.unshift(newTipeState())
     },
     loadTipe: (state, action: PayloadAction<TipeState>) => {
       // Firebaseの同期用 古い要素を後ろに追加していく すでにあるならアップデート
@@ -115,40 +123,69 @@ export const librarySlice = createSlice({
       state.tipes[action.payload.index].editDate = new Date().getTime()
       state.tipes[action.payload.index].lastSessionId = state.sessionId
     },
-    createThread: (state, action: PayloadAction<number>) => {
-      if (!state.tipes[action.payload].thread) {
-        const currentThread = newThreadState(state.tipes[action.payload].id)
-        state.threads.push(currentThread)
-        state.tipes[action.payload].thread = currentThread.id
-        state.tipes[action.payload].lastSessionId = state.sessionId
+    addThread: (state, action: PayloadAction<ThreadState>) => {
+      // 注意：Tipesと同様threadsも新しいものが先頭になるようにする
+      state.threads.splice(0, 0, action.payload)
+    },
+    loadThread: (state, action: PayloadAction<ThreadState>) => {
+      // Firebaseの同期用 古い要素を後ろに追加していく すでにあるならアップデート
+      const tmp = state.threads.findIndex((element) => element.id === action.payload.id)
+      if (tmp !== -1) {
+        if (action.payload.editDate !== state.threads[tmp].editDate) {
+          state.threads[tmp] = action.payload
+        }
+      } else {
+        state.threads.push(action.payload)
       }
+    },
+    refreshSessionIdOfThread: (state, action: PayloadAction<number>) => {
+      state.threads[action.payload].lastSessionId = state.sessionId
+    },
+    removeThread: (state, action: PayloadAction<number>) => {
+      state.threads.splice(action.payload, 1)
+    },
+    addTipeToThread: (state, action: PayloadAction<threadPayload>) => {
+      // 注意：Tipesと同様threadsのchildrenも新しいものが先頭になるようにする
+      state.threads[action.payload.threadIndex].children.splice(action.payload.childIndex, 0, action.payload.value)
+      state.threads[action.payload.threadIndex].editDate = new Date().getTime()
+      state.threads[action.payload.threadIndex].lastSessionId = state.sessionId
+    },
+    removeTipeFromThread: (state, action: PayloadAction<threadPayload>) => {
+      state.threads[action.payload.threadIndex].children.splice(action.payload.childIndex, 1)
+      state.threads[action.payload.threadIndex].editDate = new Date().getTime()
+      state.threads[action.payload.threadIndex].lastSessionId = state.sessionId
     }
   }
 })
 
 export const {
   addTipe,
-  addNewTipe,
   loadTipe,
   refreshSessionIdOfTipe,
   removeTipe,
   editTextOfTipe,
   editTitleOfTipe,
   editThreadOfTipe,
-  createThread
+
+  addThread,
+  loadThread,
+  refreshSessionIdOfThread,
+  removeThread,
+  addTipeToThread,
+  removeTipeFromThread
 } = librarySlice.actions
 export const selectLibrary = (state: RootState) => state.library
 
-export const loadTipeFromFirebase = () => {
+export const loadFromFirebase = () => {
   return (dispatch: Dispatch<any>, getState: () => {library: LibraryState}) => {
     firestore.collection('ver2users').doc('sZYKVb4GeOBrj69E28sB').collection('tipes')
       .where('is', '==', 'tipe')
       .orderBy('createDate', 'desc')
-      .limit(5)
+      // .limit(5)
       .onSnapshot((querySnapshot) => {
         querySnapshot.docChanges().forEach(change => {
+          const library = getState().library
           if (change.type !== 'removed') {
-            const library = getState().library
             if (change.type === 'added') {
               if (change.doc.data().editDate > library.sessionBeginDate &&
               change.doc.data().lastSessionId !== library.sessionId) {
@@ -167,6 +204,39 @@ export const loadTipeFromFirebase = () => {
                 dispatch(refreshSessionIdOfTipe(tmp))
               }, 500)
             }
+          } else {
+            dispatch(removeTipe(library.tipes.findIndex((element) => { return element.id === change.doc.data().id })))
+          }
+        })
+      })
+    firestore.collection('ver2users').doc('sZYKVb4GeOBrj69E28sB').collection('threads')
+      .where('is', '==', 'thread')
+      .orderBy('createDate', 'desc')
+      // .limit(5)
+      .onSnapshot((querySnapshot) => {
+        querySnapshot.docChanges().forEach(change => {
+          const library = getState().library
+          if (change.type !== 'removed') {
+            if (change.type === 'added') {
+              if (change.doc.data().editDate > library.sessionBeginDate &&
+              change.doc.data().lastSessionId !== library.sessionId) {
+                // 別端末で追加された要素
+                dispatch(addThread(change.doc.data() as ThreadState))
+              } else {
+                // ただ読み込んでるだけ
+                dispatch(loadThread(change.doc.data() as ThreadState))
+              }
+            } else {
+              dispatch(loadThread(change.doc.data() as ThreadState))
+            }
+            const tmp = library.threads.findIndex((element) => element.id === change.doc.data().id)
+            if (tmp !== -1) {
+              setTimeout(() => {
+                dispatch(refreshSessionIdOfThread(tmp))
+              }, 500)
+            }
+          } else {
+            dispatch(removeThread(library.threads.findIndex((element) => { return element.id === change.doc.data().id })))
           }
         })
       })
@@ -183,6 +253,20 @@ export const pushTipeToFirebase = (index: number) => {
 export const removeTipeFromFirebase = (id: string) => {
   return () => {
     firestore.collection('ver2users').doc('sZYKVb4GeOBrj69E28sB').collection('tipes')
+      .doc(id).delete()
+  }
+}
+export const pushThreadToFirebase = (index: number) => {
+  return (dispatch: Dispatch<any>, getState: ()=>{library: LibraryState}) => {
+    const stateBefore = getState()
+    firestore.collection('ver2users').doc('sZYKVb4GeOBrj69E28sB').collection('threads')
+      .doc(stateBefore.library.threads[index].id)
+      .set(Object.assign({}, stateBefore.library.threads[index]), { merge: true })
+  }
+}
+export const removeThreadFromFirebase = (id: string) => {
+  return () => {
+    firestore.collection('ver2users').doc('sZYKVb4GeOBrj69E28sB').collection('threads')
       .doc(id).delete()
   }
 }

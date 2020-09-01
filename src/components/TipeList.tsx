@@ -3,7 +3,14 @@ import { useDispatch, useSelector } from 'react-redux'
 import styled from 'styled-components'
 
 import Tipe from './Tipe'
-import { selectLibrary, addNewTipe, loadTipeFromFirebase } from '../redux/librarySlice'
+import {
+  selectLibrary,
+  addTipe,
+  addTipeToThread,
+  newTipeState,
+  loadFromFirebase,
+  pushThreadToFirebase
+} from '../redux/librarySlice'
 
 const List = styled.div`
   min-height: 100vh;
@@ -28,26 +35,51 @@ const Addbt = styled.div`
 `
 
 interface TipeListProps {
-  indexes: Array<number>,
-  thread?: boolean,
+  thread?: string,
   readonly?: boolean
 }
 
 function TipeList (props: TipeListProps) {
   const dispatch = useDispatch()
   const library = useSelector(selectLibrary)
+  const indexOfThisThread = props.thread
+    ? library.threads.findIndex((element) => { return element.id === props.thread })
+    : -1
 
   return <List>
-    <Addbt onClick={() => dispatch(addNewTipe())}>add Tipe</Addbt>
-    {props.indexes.map((i, index) => (
-      <Tipe
-        key={library.tipes[i].id}
-        index={i}
-        readonly={props.readonly}
-      />
-    ))}
+    <Addbt onClick={() => {
+      const newTipe = newTipeState()
+      if (props.thread) {
+        newTipe.thread = props.thread
+      }
+      dispatch(addTipe(newTipe))
+      if (props.thread) {
+        dispatch(addTipeToThread({
+          threadIndex: indexOfThisThread,
+          childIndex: 0,
+          value: newTipe.id
+        }))
+        dispatch(pushThreadToFirebase(indexOfThisThread))
+      }
+    }}>add Tipe</Addbt>
+    {indexOfThisThread >= 0
+      ? library.threads[indexOfThisThread].children.map((childId, i) => (
+        <Tipe
+          key={childId}
+          index={library.tipes.findIndex((e) => { return e.id === childId })}
+          readonly={props.readonly}
+        />
+      ))
+      : library.tipes.map((thisTipe, i) => (
+        <Tipe
+          key={thisTipe.id}
+          index={i}
+          readonly={false}
+        />
+      ))
+    }
     <Loadbt onClick={() => {
-      dispatch(loadTipeFromFirebase())
+      dispatch(loadFromFirebase())
     }}>Load</Loadbt>
   </List>
 }

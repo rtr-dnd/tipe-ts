@@ -12,18 +12,13 @@ import { selectLibrary } from '../redux/librarySlice'
 function ThreadPage () {
   const library = useSelector(selectLibrary)
   const params = useParams()
-  console.log(params)
 
-  const index = library.threads.findIndex(element => element.id === (params as any).threadId)
-  console.log(index)
+  const threadId = library.threads.find(element => element.id === (params as any).threadId)?.id
 
   return (
     <div>
       <TipeList
-        indexes={library.threads[index].children.map((e) => {
-          return library.tipes.findIndex(t => t.id === e)
-        })}
-        thread={true}
+        thread={threadId}
       />
     </div>
   )

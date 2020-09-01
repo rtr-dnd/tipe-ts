@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import {
   BrowserRouter as Router,
   Switch,
@@ -14,7 +14,7 @@ import IndexPage from './IndexPage'
 import ThreadPage from './ThreadPage'
 
 import * as firebase from 'firebase'
-import { firebaseProject, firestore } from '../firebase'
+import { firestore } from '../firebase'
 
 const AppRoot = styled.div`
   background-color: ${props => props.theme.background};
@@ -51,10 +51,6 @@ const Dark = styled.button`
 
 function App () {
   const [isDark, setIsDark] = useState<boolean>(false)
-
-  useEffect(() => {
-    console.log(firebaseProject.name)
-  }, [])
 
   const onLogin = () => {
     const provider = new firebase.auth.GoogleAuthProvider()
