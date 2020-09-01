@@ -17,10 +17,11 @@ import {
 } from '../redux/librarySlice'
 import TitleInput from './TitleInput'
 import IconAddThread from './icons/IconAddThread'
+import IconThreadMore from './icons/IconThreadMore'
 import { Redirect } from 'react-router-dom'
 
 const TipeContainer = styled.div`
-  padding: 48px 32px;
+  padding: 0 32px;
   display: flex;
   border-bottom: 1px solid ${props => props.theme.border};
   transition: 0.5s;
@@ -28,6 +29,7 @@ const TipeContainer = styled.div`
 const Texts = styled.div`
   flex-grow: 1;
   flex-shrink: 1;
+  margin: 48px 0;
   p, div {
     font-size: 14px;
     line-height: 1.7em;
@@ -44,10 +46,29 @@ const Texts = styled.div`
 const Titles = styled.div`
   width: 35%;
   flex-shrink: 0;
-  padding-left: 16px;
+  padding: 48px 0 48px 16px;
   display: flex;
   flex-direction: column;
   text-align: right;
+  align-items: flex-end;
+  .hiding {
+    transition: height 0.3s, opacity 0.3s, margin 0.3s;
+    opacity: 0;
+    height: 0;
+  }
+  &:hover {
+    .hiding {
+      opacity: 100%;
+    }
+    .modified-date {
+      height: 1em;
+      margin: 24px 0 12px 0;
+    }
+    .button-with-icon {
+      height: 1em;
+      margin-bottom: 24px;
+    }
+  }
 `
 const Spacer = styled.div`
   flex-grow: 1;
@@ -57,13 +78,15 @@ const Sticky = styled.div`
   bottom: 48px;
 `
 const ModifiedDate = styled.p`
-  color: ${props => props.theme.textGrey};
+  color: ${props => props.theme.border};
   transition: 0.5s;
   font-size: 13px;
-  margin: 24px 0 12px 0;
+  margin: 0;
 `
 const Divider = styled.div`
-  display: inline-block;
+  display: block;
+  margin-right: 0;
+  margin-left: auto;
   width: 32px;
   border-bottom: 1px solid ${props => props.theme.border};
 `
@@ -72,13 +95,21 @@ const ButtonWithIcon = styled.div`
   justify-content: flex-end;
   font-size: 13px;
   color: ${props => props.theme.textGrey};
-  margin-bottom: 12px;
-  transition: 0.5s;
+  transition: color 0.1s;
   cursor: pointer;
   p {
     padding: 0;
     margin: 0;
     padding-right: 8px;
+  }
+  svg {
+    fill: ${props => props.theme.textGrey};
+  }
+  &:hover {
+    color: ${props => props.theme.textGreyDarker};
+    svg {
+      fill: ${props => props.theme.textGreyDarker};
+    }
   }
 `
 
@@ -123,7 +154,7 @@ function Tipe (props: TipeProps) {
         value: e.target.value
       }))
       dispatch(pushTipeToFirebase(props.index))
-    }, 100)
+    }, 1000)
   }
 
   const [redirect, setRedirect] = useState<boolean>(false)
@@ -155,6 +186,7 @@ function Tipe (props: TipeProps) {
         }}>Remove this</button> */}
         {library.tipes[props.index].thread === null
           ? <ButtonWithIcon
+            className={'hiding button-with-icon'}
             onClick={() => {
               const newThread = newThreadState(library.tipes[props.index].id)
               dispatch(addThread(newThread))
@@ -162,16 +194,22 @@ function Tipe (props: TipeProps) {
               dispatch(pushThreadToFirebase(0))
               handleRedirect('/thread/' + newThread.id)
             }}>
-            <p>Create thread</p>
+            <p>Reply</p>
             <IconAddThread />
           </ButtonWithIcon>
           : <ButtonWithIcon
+            className={'hiding button-with-icon'}
             onClick={() => handleRedirect('/thread/' + library.tipes[props.index].thread)}>
             <p>Go to thread</p>
           </ButtonWithIcon>
         }
-        <Divider />
-        <ModifiedDate>
+        <ButtonWithIcon
+          className={'hiding button-with-icon'}>
+          <p>Add to existing thread</p>
+          <IconThreadMore />
+        </ButtonWithIcon>
+        <Divider className={'hiding'} />
+        <ModifiedDate className={'hiding modified-date'}>
           {new Date(Number(library.tipes[props.index].editDate)).getHours()}:
           {new Date(Number(library.tipes[props.index].editDate)).getMinutes()}:
           {new Date(Number(library.tipes[props.index].editDate)).getSeconds()}

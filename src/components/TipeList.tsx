@@ -11,6 +11,7 @@ import {
   loadFromFirebase,
   pushThreadToFirebase
 } from '../redux/librarySlice'
+import IconAdd from './icons/IconAdd'
 
 const List = styled.div`
   min-height: 100vh;
@@ -26,12 +27,28 @@ const Loadbt = styled.button`
   right: 0;
 `
 const Addbt = styled.div`
-  padding: 32px 0;
+  display: flex;
+  align-items: center;
+  padding: 24px 32px;
   cursor: pointer;
-  color: ${props => props.theme.textGrey};
-  transition: 0.5s;
+  color: transparent;
+  transition: 0.2s;
   font-size: 13px;
   text-align: center;
+  svg {
+    height: 1.3em;
+    margin-right: 12px;
+    fill: ${props => props.theme.textGrey};
+  }
+  p {
+    margin: 0;
+  }
+  &:hover {
+    color: ${props => props.theme.textGrey};
+    svg {
+      fill: ${props => props.theme.textGreyDarker};
+    }
+  }
 `
 
 interface TipeListProps {
@@ -61,7 +78,10 @@ function TipeList (props: TipeListProps) {
         }))
         dispatch(pushThreadToFirebase(indexOfThisThread))
       }
-    }}>add Tipe</Addbt>
+    }}>
+      <IconAdd />
+      <p>⌘ + return / Ctrl + Enter</p>
+    </Addbt>
     {indexOfThisThread >= 0
       ? library.threads[indexOfThisThread].children.map((childId, i) => (
         <Tipe

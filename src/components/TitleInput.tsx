@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import styled from 'styled-components'
 
 const Input = styled.input`
+  display: block;
   border: none;
   outline: none;
   font-size: 18px;
@@ -11,7 +12,12 @@ const Input = styled.input`
   text-align: right;
   &::placeholder {
     color: ${props => props.theme.border};
-    transition: 0.5s;
+    transition: 0.1s;
+  }
+  &:hover {
+    &::placeholder {
+      color: ${props => props.theme.borderDarker};
+    }
   }
 `
 

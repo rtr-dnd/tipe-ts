@@ -1,0 +1,12 @@
+import React from 'react'
+
+function IconThreadMore () {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path fillRule="evenodd" clipRule="evenodd" d="M13.3333 1.33334H2.66668C1.93334 1.33334 1.33334 1.93334 1.33334 2.66667V14.6667L4.00001 12H13.3333C14.0667 12 14.6667 11.4 14.6667 10.6667V2.66667C14.6667 1.93334 14.0667 1.33334 13.3333 1.33334ZM13.3334 10.6667H4.00002L2.66669 12V2.66667H13.3334V10.6667ZM6.00002 6H4.66668V7.33333H6.00002V6ZM7.33334 6H8.66668V7.33333H7.33334V6ZM11.3333 6H10V7.33333H11.3333V6Z"/>
+    </svg>
+
+  )
+}
+
+export default IconThreadMore
