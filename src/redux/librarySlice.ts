@@ -95,9 +95,9 @@ export const librarySlice = createSlice({
       // Firebaseの同期用 古い要素を後ろに追加していく すでにあるならアップデート
       const tmp = state.tipes.findIndex((element) => element.id === action.payload.id)
       if (tmp !== -1) {
-        if (action.payload.editDate !== state.tipes[tmp].editDate) {
+        if (action.payload.editDate >= state.tipes[tmp].editDate) {
           state.tipes[tmp] = action.payload
-        }
+        } else { }
       } else {
         state.tipes.push(action.payload)
       }
@@ -175,6 +175,37 @@ export const {
   removeTipeFromThread
 } = librarySlice.actions
 export const selectLibrary = (state: RootState) => state.library
+
+export const loadFirstTipesFromFirebase = async (dispatch: Dispatch<any>) => {
+  return new Promise((resolve) => {
+    firestore.collection('ver2users').doc('sZYKVb4GeOBrj69E28sB').collection('tipes')
+      .where('is', '==', 'tipe')
+      .orderBy('createDate', 'desc')
+      .limit(5)
+      .get().then((querySnapshot) => {
+        querySnapshot.forEach((doc) => {
+          dispatch(loadTipe(doc.data() as TipeState))
+        })
+      }).then(() => {
+        window.scrollTo(0, document.body.scrollHeight)
+        resolve()
+      })
+  })
+}
+export const loadEveryTipesFromFirebase = async (dispatch: Dispatch<any>) => {
+  return new Promise((resolve) => {
+    firestore.collection('ver2users').doc('sZYKVb4GeOBrj69E28sB').collection('tipes')
+      .where('is', '==', 'tipe')
+      .orderBy('createDate', 'desc')
+      .get().then((querySnapshot) => {
+        querySnapshot.forEach((doc) => {
+          dispatch(loadTipe(doc.data() as TipeState))
+        })
+      }).then(() => {
+        resolve()
+      })
+  })
+}
 
 export const loadFromFirebase = () => {
   return (dispatch: Dispatch<any>, getState: () => {library: LibraryState}) => {

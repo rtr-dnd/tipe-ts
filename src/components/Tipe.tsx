@@ -52,7 +52,7 @@ const Titles = styled.div`
   text-align: right;
   align-items: flex-end;
   .hiding {
-    transition: height 0.3s, opacity 0.3s, margin 0.3s;
+    transition: opacity 0.3s;
     opacity: 0.3;
   }
   &:hover {
@@ -80,8 +80,8 @@ const ModifiedDate = styled.p`
   color: ${props => props.theme.textGrey};
   transition: 0.5s;
   font-size: 13px;
-      margin: 24px 0 12px 0;
-      height: 1em;
+  margin: 24px 0 12px 0;
+  height: 1em;
 `
 const Divider = styled.div`
   display: block;
@@ -97,8 +97,8 @@ const ButtonWithIcon = styled.div`
   color: ${props => props.theme.textGrey};
   transition: color 0.1s;
   cursor: pointer;
-      margin-bottom: 24px;
-      height: 1em;
+  margin-bottom: 24px;
+  height: 1em;
   p {
     padding: 0;
     margin: 0;

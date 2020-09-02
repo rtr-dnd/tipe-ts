@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   BrowserRouter as Router,
   Switch,
@@ -7,12 +7,18 @@ import {
 } from 'react-router-dom'
 import { TransitionGroup, CSSTransition } from 'react-transition-group'
 import styled, { ThemeProvider } from 'styled-components'
+import { useDispatch, useSelector } from 'react-redux'
 
 import { light, dark } from '../assets/colors'
 import Header from '../components/Header'
 import IndexPage from './IndexPage'
 import ThreadPage from './ThreadPage'
 
+import { loadFirstTipesFromFirebase, loadEveryTipesFromFirebase, loadFromFirebase } from '../redux/librarySlice'
+import {
+  selectView,
+  setStatus
+} from '../redux/viewSlice'
 import * as firebase from 'firebase'
 import { firestore } from '../firebase'
 
@@ -50,7 +56,57 @@ const Dark = styled.button`
 `
 
 function App () {
-  const [isDark, setIsDark] = useState<boolean>(false)
+  const dispatch = useDispatch()
+  const view = useSelector(selectView)
+
+  const loadFullData = async (entries: any, observer: any) => {
+    entries.forEach(async (entry: any) => {
+      if (entry.intersectionRatio > 0) {
+        const prevDistanceFromBottom = document.body.scrollHeight - window.pageYOffset
+        await loadEveryTipesFromFirebase(dispatch)
+        window.scrollTo(0, document.body.scrollHeight - prevDistanceFromBottom)
+        dispatch(loadFromFirebase())
+        if (view.status !== 'disconnected') {
+          dispatch(setStatus('loaded'))
+        }
+      }
+    })
+  }
+
+  const loadData = async () => {
+    const options = {
+      rootMargin: '0px',
+      threshold: 1
+    }
+    if (view.status !== 'disconnected') {
+      await loadFirstTipesFromFirebase(dispatch)
+      dispatch(setStatus('first data loaded'))
+      const observer = new IntersectionObserver(loadFullData, options)
+      const target = document.querySelector('#loading-message')
+      observer.observe(target as any)
+    }
+  }
+
+  firebase.auth().onAuthStateChanged((user) => {
+    console.log(user?.uid)
+  })
+  const connectedRef = firebase.database().ref('.info/connected')
+  connectedRef.on('value', function (snap) {
+    if (snap.val() === true) {
+      console.log('connected')
+      dispatch(setStatus('connected'))
+      loadData()
+    } else {
+      console.log('disconnected')
+      dispatch(setStatus('disconnected'))
+    }
+  })
+  useEffect(() => {
+    loadData()
+    console.log('loading data')
+  }, [])
+
+  const [isDark, setIsDark] = useState<boolean>(true)
 
   const onLogin = () => {
     const provider = new firebase.auth.GoogleAuthProvider()

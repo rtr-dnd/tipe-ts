@@ -11,6 +11,10 @@ import {
   loadFromFirebase,
   pushThreadToFirebase
 } from '../redux/librarySlice'
+import {
+  selectView,
+  setStatus
+} from '../redux/viewSlice'
 import IconAdd from './icons/IconAdd'
 
 const List = styled.div`
@@ -18,13 +22,28 @@ const List = styled.div`
   display: flex;
   flex-direction: column-reverse;
   justify-content: flex-start;
-  padding: 40vh 48px;
+  padding: 0 48px 40vh 48px;
   box-sizing: border-box;
 `
-const Loadbt = styled.button`
-  position: fixed;
-  top: 0;
-  right: 0;
+const Loading = styled.div`
+  display: flex;
+  width: 100%;
+  padding: 40vh 32px 64px 32px;
+  color: ${props => props.theme.textGrey};
+  font-size: 14px;
+  border-bottom: 1px solid;
+  border-color: ${props => props.theme.border};
+  .loading {
+    animation:blinkingText 1.5s infinite;
+  }
+  @keyframes blinkingText{
+    0% {
+      color: ${props => props.theme.textGrey};
+    }
+    50% {
+      color: ${props => props.theme.border};
+    }
+  }
 `
 const Addbt = styled.div`
   display: flex;
@@ -59,6 +78,7 @@ interface TipeListProps {
 function TipeList (props: TipeListProps) {
   const dispatch = useDispatch()
   const library = useSelector(selectLibrary)
+  const view = useSelector(selectView)
   const indexOfThisThread = props.thread
     ? library.threads.findIndex((element) => { return element.id === props.thread })
     : -1
@@ -98,10 +118,21 @@ function TipeList (props: TipeListProps) {
         />
       ))
     }
-    <Loadbt onClick={() => {
-      dispatch(loadFromFirebase())
-    }}>Load</Loadbt>
+    <Loading id="loading-message">
+      {LoadingMessage(view.status)}
+    </Loading>
   </List>
+}
+
+function LoadingMessage (status: string) {
+  switch (status) {
+    case 'loaded':
+      return <p>You've reached to the very top of your Tipes.</p>
+    case 'disconnected':
+      return <p>Looks like you're offline.</p>
+    default:
+      return <p className="loading">Loading...</p>
+  }
 }
 
 export default TipeList
