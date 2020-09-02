@@ -1,3 +1,5 @@
+import IntersectionObserver from 'intersection-observer'
+
 import React, { useState, useEffect } from 'react'
 import {
   BrowserRouter as Router,
