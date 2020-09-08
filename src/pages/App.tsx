@@ -1,5 +1,3 @@
-import IntersectionObserver from 'intersection-observer'
-
 import React, { useState, useEffect } from 'react'
 import {
   BrowserRouter as Router,
@@ -16,13 +14,22 @@ import Header from '../components/Header'
 import IndexPage from './IndexPage'
 import ThreadPage from './ThreadPage'
 
-import { loadFirstTipesFromFirebase, loadEveryTipesFromFirebase, loadFromFirebase } from '../redux/librarySlice'
+import {
+  loadFirstTipesFromFirebase,
+  loadEveryTipesFromFirebase,
+  loadFromFirebase,
+  newTipeState,
+  addTipe
+} from '../redux/librarySlice'
 import {
   selectView,
-  setStatus
+  setLoadingStatus,
+  setConnectedStatus
 } from '../redux/viewSlice'
 import * as firebase from 'firebase'
 import { firestore } from '../firebase'
+
+require('intersection-observer')
 
 const AppRoot = styled.div`
   background-color: ${props => props.theme.background};
@@ -30,9 +37,6 @@ const AppRoot = styled.div`
 `
 
 const Content = styled.div`
-  width: 100%;
-  max-width: 800px;
-  margin: 0 auto;
   .fade-enter {
       opacity: 0.01;
   }
@@ -62,17 +66,20 @@ function App () {
   const view = useSelector(selectView)
 
   const loadFullData = async (entries: any, observer: any) => {
-    entries.forEach(async (entry: any) => {
-      if (entry.intersectionRatio > 0) {
-        const prevDistanceFromBottom = document.body.scrollHeight - window.pageYOffset
-        await loadEveryTipesFromFirebase(dispatch)
-        window.scrollTo(0, document.body.scrollHeight - prevDistanceFromBottom)
-        dispatch(loadFromFirebase())
-        if (view.status !== 'disconnected') {
-          dispatch(setStatus('loaded'))
+    if (view.loadingStatus !== 'loaded') {
+      entries.forEach(async (entry: any) => {
+        if (entry.intersectionRatio > 0) {
+          const prevDistanceFromBottom = document.body.scrollHeight - window.pageYOffset
+          await loadEveryTipesFromFirebase(dispatch)
+          window.scrollTo(0, document.body.scrollHeight - prevDistanceFromBottom)
+          dispatch(loadFromFirebase())
+          console.log('loading from firebase')
+          if (view.connectedStatus !== 'disconnected') {
+            dispatch(setLoadingStatus('loaded'))
+          }
         }
-      }
-    })
+      })
+    }
   }
 
   const loadData = async () => {
@@ -80,9 +87,9 @@ function App () {
       rootMargin: '0px',
       threshold: 1
     }
-    if (view.status !== 'disconnected') {
+    if (view.connectedStatus !== 'disconnected') {
       await loadFirstTipesFromFirebase(dispatch)
-      dispatch(setStatus('first data loaded'))
+      dispatch(setLoadingStatus('first data loaded'))
       const observer = new IntersectionObserver(loadFullData, options)
       const target = document.querySelector('#loading-message')
       observer.observe(target as any)
@@ -96,16 +103,18 @@ function App () {
   connectedRef.on('value', function (snap) {
     if (snap.val() === true) {
       console.log('connected')
-      dispatch(setStatus('connected'))
-      loadData()
+      dispatch(setConnectedStatus('connected'))
+      if (view.loadingStatus === 'loading') {
+        loadData()
+      }
     } else {
       console.log('disconnected')
-      dispatch(setStatus('disconnected'))
+      dispatch(setConnectedStatus('disconnected'))
     }
   })
   useEffect(() => {
-    loadData()
     console.log('loading data')
+    dispatch(addTipe(newTipeState()))
   }, [])
 
   const [isDark, setIsDark] = useState<boolean>(true)
@@ -131,7 +140,6 @@ function App () {
     <Router>
       <ThemeProvider theme={isDark ? dark : light}>
         <AppRoot>
-          <Header />
           <Login onClick={onLogin}>Login</Login>
           <Dark onClick={() => {
             setIsDark(!isDark)
@@ -159,11 +167,13 @@ function AnimatedApp () {
         >
           <Switch location={location}>
             <Route path='/thread/:threadId'>
+              <Header />
               <ThreadPage />
             </Route>
             <Route path='/about'></Route>
             <Route path='/get-started'></Route>
             <Route exact path='/'>
+              <Header />
               <IndexPage />
             </Route>
           </Switch>

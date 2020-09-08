@@ -271,6 +271,7 @@ export const loadFromFirebase = () => {
           }
         })
       })
+    console.log('load from firebase')
   }
 }
 export const pushTipeToFirebase = (index: number) => {

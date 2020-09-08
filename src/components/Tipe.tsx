@@ -15,6 +15,7 @@ import {
   pushThreadToFirebase,
   editThreadOfTipe
 } from '../redux/librarySlice'
+import { selectView } from '../redux/viewSlice'
 import TitleInput from './TitleInput'
 import IconAddThread from './icons/IconAddThread'
 import IconThreadMore from './icons/IconThreadMore'
@@ -196,7 +197,7 @@ function Tipe (props: TipeProps) {
               dispatch(pushThreadToFirebase(0))
               handleRedirect('/thread/' + newThread.id)
             }}>
-            <p>スレッドで続ける</p>
+            <p>スレッドで返信</p>
             <IconAddThread />
           </ButtonWithIcon>
           : <ButtonWithIcon

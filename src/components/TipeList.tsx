@@ -13,11 +13,14 @@ import {
 } from '../redux/librarySlice'
 import {
   selectView,
-  setStatus
+  setLoadingStatus
 } from '../redux/viewSlice'
 import IconAdd from './icons/IconAdd'
 
 const List = styled.div`
+  max-width: 800px;
+  width: 100%;
+  margin: 0 auto;
   min-height: 100vh;
   display: flex;
   flex-direction: column-reverse;
@@ -119,19 +122,18 @@ function TipeList (props: TipeListProps) {
       ))
     }
     <Loading id="loading-message">
-      {LoadingMessage(view.status)}
+      {LoadingMessage(view.loadingStatus, view.connectedStatus)}
     </Loading>
   </List>
 }
 
-function LoadingMessage (status: string) {
-  switch (status) {
-    case 'loaded':
-      return <p>You've reached to the very top of your Tipes.</p>
-    case 'disconnected':
-      return <p>Looks like you're offline.</p>
-    default:
-      return <p className="loading">Loading...</p>
+function LoadingMessage (loadingStatus: string, connectedStatus: string) {
+  if (loadingStatus === 'loaded') {
+    return <p>You've reached to the very top of your Tipes.</p>
+  } else if (connectedStatus === 'disconnected') {
+    return <p>Looks like you're offline.</p>
+  } else {
+    return <p className="loading">Loading...</p>
   }
 }
 
