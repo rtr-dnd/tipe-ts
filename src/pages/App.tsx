@@ -71,6 +71,7 @@ function App () {
         if (entry.intersectionRatio > 0) {
           const prevDistanceFromBottom = document.body.scrollHeight - window.pageYOffset
           await loadEveryTipesFromFirebase(dispatch)
+          console.log('load full data')
           window.scrollTo(0, document.body.scrollHeight - prevDistanceFromBottom)
           dispatch(loadFromFirebase())
           console.log('loading from firebase')
@@ -114,7 +115,8 @@ function App () {
   })
   useEffect(() => {
     console.log('loading data')
-    dispatch(addTipe(newTipeState()))
+    const newTipe = newTipeState()
+    dispatch(addTipe(newTipe))
   }, [])
 
   const [isDark, setIsDark] = useState<boolean>(true)

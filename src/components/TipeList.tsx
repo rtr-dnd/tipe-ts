@@ -1,6 +1,7 @@
-import React from 'react'
+import React, { RefObject } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import styled from 'styled-components'
+import Editor from 'tipe-markdown-editor'
 
 import Tipe from './Tipe'
 import {
@@ -85,6 +86,24 @@ function TipeList (props: TipeListProps) {
   const indexOfThisThread = props.thread
     ? library.threads.findIndex((element) => { return element.id === props.thread })
     : -1
+  const refs: {[key: string]: RefObject<Editor>} = {}
+  const getOrCreateRef = (id: string) => {
+    // eslint-disable-next-line
+    if (!refs.hasOwnProperty(id)) {
+      refs[id] = React.createRef()
+    }
+    return refs[id]
+  }
+  const getRefByIndex = (myIndex: number, relativeIndex: number) => {
+    if (indexOfThisThread !== -1) {
+      // return getOrCreateRef(
+      //   library.threads[indexOfThisThread].children[library.threads[indexOfThisThread].children.findIndex((element) => {
+      //     return element === library.tipes[myIndex].id
+      //   })])
+    } else {
+      return getOrCreateRef(library.tipes[myIndex + relativeIndex].id)
+    }
+  }
 
   return <List>
     <Addbt onClick={() => {
@@ -108,15 +127,21 @@ function TipeList (props: TipeListProps) {
     {indexOfThisThread >= 0
       ? library.threads[indexOfThisThread].children.map((childId, i) => (
         <Tipe
+          getRefByIndex={getRefByIndex}
+          forwardedRef={getOrCreateRef(childId)}
           key={childId}
           index={library.tipes.findIndex((e) => { return e.id === childId })}
+          indexOfThisThread={indexOfThisThread}
           readonly={props.readonly}
         />
       ))
       : library.tipes.map((thisTipe, i) => (
         <Tipe
+          getRefByIndex={getRefByIndex}
+          forwardedRef={getOrCreateRef(thisTipe.id)}
           key={thisTipe.id}
           index={i}
+          indexOfThisThread={indexOfThisThread}
           readonly={false}
         />
       ))

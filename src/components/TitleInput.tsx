@@ -1,5 +1,10 @@
 import React, { useState } from 'react'
 import styled from 'styled-components'
+import { useSelector } from 'react-redux'
+
+import {
+  selectLibrary
+} from '../redux/librarySlice'
 
 const Input = styled.input`
   display: block;
@@ -22,12 +27,13 @@ const Input = styled.input`
 `
 
 interface TitleInputProps {
-  defaultValue: string | undefined,
+  index: number,
   onTitleChange: any
 }
 
 function TitleInput (props: TitleInputProps) {
-  const [title, setTitle] = useState<string | undefined>(props.defaultValue)
+  const library = useSelector(selectLibrary)
+  const [title, setTitle] = useState<string | undefined>(library.tipes[props.index].title)
 
   const onTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setTitle(e.target.value)
@@ -36,7 +42,7 @@ function TitleInput (props: TitleInputProps) {
 
   return <Input
     type="text"
-    autoFocus
+    // autoFocus
     value={title}
     onChange={onTitleChange}
     placeholder="Add title" />

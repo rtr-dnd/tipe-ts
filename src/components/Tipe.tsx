@@ -1,19 +1,23 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useState, RefObject } from 'react'
 import Editor from 'tipe-markdown-editor'
 import { useSelector, useDispatch } from 'react-redux'
 import styled from 'styled-components'
+import { v4 as uuidv4 } from 'uuid'
 
 import {
   newThreadState,
   addThread,
   removeTipe,
+  addTipe,
   editTitleOfTipe,
   editTextOfTipe,
   selectLibrary,
   pushTipeToFirebase,
   removeTipeFromFirebase,
   pushThreadToFirebase,
-  editThreadOfTipe
+  editThreadOfTipe,
+  newTipeState,
+  addTipeToThread
 } from '../redux/librarySlice'
 import { selectView } from '../redux/viewSlice'
 import TitleInput from './TitleInput'
@@ -76,6 +80,8 @@ const Spacer = styled.div`
 const Sticky = styled.div`
   position: sticky;
   bottom: 48px;
+  display: flex;
+  flex-direction: column-reverse;
 `
 const ModifiedDate = styled.p`
   color: ${props => props.theme.textGrey};
@@ -91,7 +97,9 @@ const Divider = styled.div`
   width: 32px;
   border-bottom: 1px solid ${props => props.theme.border};
 `
-const ButtonWithIcon = styled.div`
+const ButtonWithIcon = styled.button`
+  background-color: transparent;
+  border: none;
   display: flex;
   justify-content: flex-end;
   font-size: 13px;
@@ -108,7 +116,9 @@ const ButtonWithIcon = styled.div`
   svg {
     fill: ${props => props.theme.textGrey};
   }
-  &:hover {
+  &:hover, &:focus {
+    opacity: 100%;
+    outline: none;
     color: ${props => props.theme.textGreyDarker};
     svg {
       fill: ${props => props.theme.textGreyDarker};
@@ -117,29 +127,31 @@ const ButtonWithIcon = styled.div`
 `
 
 interface TipeProps {
-  index: number,
+  index: number, // tipesの中でのindexなのでthreadsかどうかとかは関係ない
+  indexOfThisThread: number,
   readonly?: boolean,
+  forwardedRef: RefObject<Editor>,
+  getRefByIndex: any
 }
-
-function Tipe (props: TipeProps) {
+const Tipe = React.forwardRef<Editor, TipeProps>((props: TipeProps) => {
   const library = useSelector(selectLibrary)
   const dispatch = useDispatch()
 
-  const editorRef = useRef<Editor>(null)
+  const editorRef = props.forwardedRef
   useEffect(() => {
-    if (editorRef && editorRef.current) {
+    if (props.index === 0 && editorRef && editorRef.current) {
       editorRef.current.focusAtEnd()
     }
   }, [])
 
   let textTimeout: ReturnType<typeof setTimeout>
   const onTextChange = (valueFunc: () => string) => {
+    dispatch(editTextOfTipe({
+      index: props.index,
+      value: valueFunc()
+    }))
     clearTimeout(textTimeout)
     textTimeout = setTimeout(() => {
-      dispatch(editTextOfTipe({
-        index: props.index,
-        value: valueFunc()
-      }))
       dispatch(pushTipeToFirebase(props.index))
     }, 1000)
   }
@@ -167,6 +179,39 @@ function Tipe (props: TipeProps) {
     setRedirect(true)
   }
 
+  const [placeholder, setPlaceholder] = useState<string>('Jot something down...')
+  const handleKeydown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    switch (e.key) {
+      case 'Backspace':
+        if (
+          library.tipes[props.index].text === '\\' ||
+          library.tipes[props.index].text === '\\\n' ||
+          library.tipes[props.index].text === '') {
+          // setPlaceholder('Press Backspace twice to delete')
+          // e.preventDefault()
+          props.getRefByIndex(props.index, 1).current.focusAtEnd()
+          dispatch(removeTipeFromFirebase(library.tipes[props.index].id))
+          dispatch(removeTipe(props.index))
+        }
+        break
+      case 'Enter':
+        if (e.getModifierState('Meta') || e.getModifierState('Control')) {
+          const newTipe = newTipeState()
+          if (props.indexOfThisThread !== -1) {
+            newTipe.thread = library.threads[props.indexOfThisThread].id
+          }
+          dispatch(addTipe(newTipe))
+          if (props.indexOfThisThread !== -1) {
+            dispatch(addTipeToThread({
+              threadIndex: props.indexOfThisThread,
+              childIndex: 0,
+              value: newTipe.id
+            }))
+          }
+        }
+    }
+  }
+
   return <TipeContainer>
     {redirect && <Redirect push to={redirectPath} />}
     <Texts>
@@ -175,9 +220,10 @@ function Tipe (props: TipeProps) {
         key={library.tipes[props.index].lastSessionId}
         defaultValue={library.tipes[props.index].text}
         onChange={value => onTextChange(value)}
+        onKeyDown={handleKeydown}
         readOnly={props.readonly}
-        autoFocus={true}
-        placeholder="Jot something down..."
+        autoFocus={false}
+        placeholder={placeholder}
       />
     </Texts>
     <Titles>
@@ -187,8 +233,20 @@ function Tipe (props: TipeProps) {
           dispatch(removeTipeFromFirebase(library.tipes[props.index].id))
           dispatch(removeTipe(props.index))
         }}>Remove this</button> */}
+
+        <TitleInput
+          index={props.index}
+          key={library.tipes[props.index].lastSessionId}
+          onTitleChange={onTitleChange} />
+        <ModifiedDate className={'hiding modified-date'}>
+          {new Date(Number(library.tipes[props.index].editDate)).getHours()}:
+          {new Date(Number(library.tipes[props.index].editDate)).getMinutes()}:
+          {new Date(Number(library.tipes[props.index].editDate)).getSeconds()}
+        </ModifiedDate>
+        <Divider className={'hiding'} />
         {library.tipes[props.index].thread === null
           ? <ButtonWithIcon
+            tabIndex={0}
             className={'hiding button-with-icon'}
             onClick={() => {
               const newThread = newThreadState(library.tipes[props.index].id)
@@ -201,29 +259,23 @@ function Tipe (props: TipeProps) {
             <IconAddThread />
           </ButtonWithIcon>
           : <ButtonWithIcon
+            tabIndex={0}
             className={'hiding button-with-icon'}
             onClick={() => handleRedirect('/thread/' + library.tipes[props.index].thread)}>
             <p>Go to thread</p>
           </ButtonWithIcon>
         }
         <ButtonWithIcon
+          tabIndex={0}
           className={'hiding button-with-icon'}>
           <p>既存のスレッドに追加</p>
           <IconThreadMore />
         </ButtonWithIcon>
-        <Divider className={'hiding'} />
-        <ModifiedDate className={'hiding modified-date'}>
-          {new Date(Number(library.tipes[props.index].editDate)).getHours()}:
-          {new Date(Number(library.tipes[props.index].editDate)).getMinutes()}:
-          {new Date(Number(library.tipes[props.index].editDate)).getSeconds()}
-        </ModifiedDate>
-        <TitleInput
-          key={library.tipes[props.index].title}
-          defaultValue={library.tipes[props.index].title}
-          onTitleChange={onTitleChange} />
       </Sticky>
     </Titles>
   </TipeContainer>
-}
+})
+
+Tipe.displayName = 'Tipe'
 
 export default Tipe

@@ -89,6 +89,7 @@ export const librarySlice = createSlice({
       // 既存要素を先頭に追加していく
       if (action && action.payload) {
         state.tipes.unshift(action.payload)
+        state.tipes[0].lastSessionId = state.sessionId
       }
     },
     loadTipe: (state, action: PayloadAction<TipeState>) => {
@@ -218,6 +219,7 @@ export const loadFromFirebase = () => {
           const library = getState().library
           if (change.type !== 'removed') {
             if (change.type === 'added') {
+              // 初回にFirebaseから読み込んでる or 他の端末で要素が増えたのを同期してる or 自分が編集でemitしたものが戻ってきた
               if (change.doc.data().editDate > library.sessionBeginDate &&
               change.doc.data().lastSessionId !== library.sessionId) {
                 // 別端末で追加された要素
@@ -265,9 +267,9 @@ export const loadFromFirebase = () => {
               setTimeout(() => {
                 dispatch(refreshSessionIdOfThread(tmp))
               }, 500)
+            } else {
+              dispatch(removeThread(library.threads.findIndex((element) => { return element.id === change.doc.data().id })))
             }
-          } else {
-            dispatch(removeThread(library.threads.findIndex((element) => { return element.id === change.doc.data().id })))
           }
         })
       })
