@@ -1,4 +1,4 @@
-import React, { RefObject } from 'react'
+import React, { useEffect, RefObject } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import styled from 'styled-components'
 import Editor from 'tipe-markdown-editor'
@@ -96,10 +96,8 @@ function TipeList (props: TipeListProps) {
   }
   const getRefByIndex = (myIndex: number, relativeIndex: number) => {
     if (indexOfThisThread !== -1) {
-      // return getOrCreateRef(
-      //   library.threads[indexOfThisThread].children[library.threads[indexOfThisThread].children.findIndex((element) => {
-      //     return element === library.tipes[myIndex].id
-      //   })])
+      const indexInContext = library.threads[indexOfThisThread].children.findIndex((element) => { return element === library.tipes[myIndex].id })
+      return getOrCreateRef(library.threads[indexOfThisThread].children[indexInContext + relativeIndex])
     } else {
       return getOrCreateRef(library.tipes[myIndex + relativeIndex].id)
     }
@@ -132,6 +130,7 @@ function TipeList (props: TipeListProps) {
           key={childId}
           index={library.tipes.findIndex((e) => { return e.id === childId })}
           indexOfThisThread={indexOfThisThread}
+          indexInContext={i}
           readonly={props.readonly}
         />
       ))
@@ -142,6 +141,7 @@ function TipeList (props: TipeListProps) {
           key={thisTipe.id}
           index={i}
           indexOfThisThread={indexOfThisThread}
+          indexInContext={i}
           readonly={false}
         />
       ))

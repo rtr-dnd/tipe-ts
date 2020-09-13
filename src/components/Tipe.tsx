@@ -17,7 +17,8 @@ import {
   pushThreadToFirebase,
   editThreadOfTipe,
   newTipeState,
-  addTipeToThread
+  addTipeToThread,
+  removeTipeFromThread
 } from '../redux/librarySlice'
 import { selectView } from '../redux/viewSlice'
 import TitleInput from './TitleInput'
@@ -129,6 +130,7 @@ const ButtonWithIcon = styled.button`
 interface TipeProps {
   index: number, // tipesの中でのindexなのでthreadsかどうかとかは関係ない
   indexOfThisThread: number,
+  indexInContext: number,
   readonly?: boolean,
   forwardedRef: RefObject<Editor>,
   getRefByIndex: any
@@ -189,9 +191,21 @@ const Tipe = React.forwardRef<Editor, TipeProps>((props: TipeProps) => {
           library.tipes[props.index].text === '') {
           // setPlaceholder('Press Backspace twice to delete')
           // e.preventDefault()
-          props.getRefByIndex(props.index, 1).current.focusAtEnd()
-          dispatch(removeTipeFromFirebase(library.tipes[props.index].id))
-          dispatch(removeTipe(props.index))
+          const lengthOfContext = props.indexOfThisThread === -1
+            ? library.tipes.length
+            : library.threads[props.indexOfThisThread].children.length
+          if (props.indexInContext < lengthOfContext - 1) {
+            props.getRefByIndex(props.index, 1).current.focusAtEnd()
+            if (props.indexOfThisThread !== -1) {
+              dispatch(removeTipeFromThread({
+                threadIndex: props.indexOfThisThread,
+                childIndex: library.threads[props.indexOfThisThread].children.findIndex((element) => { return element === library.tipes[props.index].id }),
+                value: ''
+              }))
+            }
+            dispatch(removeTipeFromFirebase(library.tipes[props.index].id))
+            dispatch(removeTipe(props.index))
+          }
         }
         break
       case 'Enter':
@@ -209,6 +223,30 @@ const Tipe = React.forwardRef<Editor, TipeProps>((props: TipeProps) => {
             }))
           }
         }
+        break
+      case 'ArrowDown':
+        if (e.getModifierState('Meta') || e.getModifierState('Control')) {
+          if (props.indexInContext !== 0) {
+            e.preventDefault()
+            props.getRefByIndex(props.index, -1).current.focusAtEnd()
+          }
+        }
+        break
+      case 'ArrowUp':
+        if (e.getModifierState('Meta') || e.getModifierState('Control')) {
+          const lengthOfContext = props.indexOfThisThread === -1
+            ? library.tipes.length
+            : library.threads[props.indexOfThisThread].children.length
+          if (props.indexInContext < lengthOfContext - 1) {
+            console.log(props.indexInContext)
+            console.log(lengthOfContext)
+            e.preventDefault()
+            props.getRefByIndex(props.index, 1).current.focusAtEnd()
+          } else {
+            console.log('prevented')
+          }
+        }
+        break
     }
   }
 
