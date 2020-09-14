@@ -282,8 +282,8 @@ const Tipe = React.forwardRef<Editor, TipeProps>((props: TipeProps) => {
           {new Date(Number(library.tipes[props.index].editDate)).getSeconds()}
         </ModifiedDate>
         <Divider className={'hiding'} />
-        {library.tipes[props.index].thread === null
-          ? <ButtonWithIcon
+        {library.tipes[props.index].thread === null &&
+          <ButtonWithIcon
             tabIndex={0}
             className={'hiding button-with-icon'}
             onClick={() => {
@@ -296,7 +296,9 @@ const Tipe = React.forwardRef<Editor, TipeProps>((props: TipeProps) => {
             <p>スレッドで返信</p>
             <IconAddThread />
           </ButtonWithIcon>
-          : <ButtonWithIcon
+        }
+        {(library.tipes[props.index].thread !== null && props.indexOfThisThread === -1) &&
+          <ButtonWithIcon
             tabIndex={0}
             className={'hiding button-with-icon'}
             onClick={() => handleRedirect('/thread/' + library.tipes[props.index].thread)}>

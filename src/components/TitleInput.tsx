@@ -19,7 +19,7 @@ const Input = styled.input`
     color: ${props => props.theme.border};
     transition: 0.1s;
   }
-  &:hover {
+  &:hover, &:focus {
     &::placeholder {
       color: ${props => props.theme.borderDarker};
     }

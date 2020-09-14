@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import {
   BrowserRouter as Router,
   Switch,
@@ -38,9 +38,9 @@ const AppRoot = styled.div`
 
 const Content = styled.div`
   .fade-enter {
-      opacity: 0.01;
+      opacity: 0;
   }
-  .fade-enter.fade-enter-active {
+  .fade-enter-active {
       opacity: 1;
       transition: opacity 300ms ease-in;
   }
@@ -48,9 +48,9 @@ const Content = styled.div`
       opacity: 1;
   }
     
-  .fade-exit.fade-exit-active {
-      opacity: 0.01;
-      transition: opacity 500ms ease-in;
+  .fade-exit-active {
+      opacity: 0;
+      transition: opacity 10ms;
   }
 `
 const Login = styled.button`
@@ -158,29 +158,61 @@ export default App
 
 function AnimatedApp () {
   const location = useLocation()
+  const nodeRef = useRef(null)
+
+  const routes = [
+    { path: '/', name: 'Home', Component: IndexPage },
+    { path: '/thread/:threadId', name: 'Thread', Component: ThreadPage }
+  ]
 
   return (
     <Content>
-      <TransitionGroup>
+      {routes.map(({ path, Component }) => (
+        <Route
+          key={path}
+          exact
+          path={path} >
+          {({ match }) => (
+            <CSSTransition
+              in={match != null}
+              timeout={0}
+              classNames={'fade'}
+              nodeRef={nodeRef}
+              unmountOnExit>
+              <div ref={nodeRef}>
+                <Header />
+                <Component />
+              </div>
+            </CSSTransition>
+          )}
+        </Route>
+      ))}
+      {/* <TransitionGroup>
         <CSSTransition
           key={location.key}
+          nodeRef={nodeRef}
           timeout={{ enter: 300, exit: 300 }}
           classNames={'fade'}
+          unmountOnExit
         >
           <Switch location={location}>
             <Route path='/thread/:threadId'>
-              <Header />
-              <ThreadPage />
+              <div ref={nodeRef}>
+                <Header />
+                <ThreadPage />
+              </div>
             </Route>
             <Route path='/about'></Route>
             <Route path='/get-started'></Route>
             <Route exact path='/'>
-              <Header />
-              <IndexPage />
+              <div ref={nodeRef}>
+                <Header />
+                <IndexPage />
+              </div>
             </Route>
           </Switch>
         </CSSTransition>
-      </TransitionGroup>
+      </TransitionGroup> */}
     </Content>
   )
 }

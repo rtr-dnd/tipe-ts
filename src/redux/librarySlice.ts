@@ -126,15 +126,18 @@ export const librarySlice = createSlice({
     },
     addThread: (state, action: PayloadAction<ThreadState>) => {
       // 注意：Tipesと同様threadsも新しいものが先頭になるようにする
-      state.threads.splice(0, 0, action.payload)
+      if (action && action.payload) {
+        state.threads.unshift(action.payload)
+        state.threads[0].lastSessionId = state.sessionId
+      }
     },
     loadThread: (state, action: PayloadAction<ThreadState>) => {
       // Firebaseの同期用 古い要素を後ろに追加していく すでにあるならアップデート
       const tmp = state.threads.findIndex((element) => element.id === action.payload.id)
       if (tmp !== -1) {
-        if (action.payload.editDate !== state.threads[tmp].editDate) {
+        if (action.payload.editDate >= state.threads[tmp].editDate) {
           state.threads[tmp] = action.payload
-        }
+        } else { }
       } else {
         state.threads.push(action.payload)
       }
@@ -267,9 +270,9 @@ export const loadFromFirebase = () => {
               setTimeout(() => {
                 dispatch(refreshSessionIdOfThread(tmp))
               }, 500)
-            } else {
-              dispatch(removeThread(library.threads.findIndex((element) => { return element.id === change.doc.data().id })))
             }
+          } else {
+            dispatch(removeThread(library.threads.findIndex((element) => { return element.id === change.doc.data().id })))
           }
         })
       })

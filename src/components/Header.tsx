@@ -49,9 +49,9 @@ function Header () {
         ? <ThreadControl />
         : <ThreadControl />
       }
-      <Icons>
+      {/* <Icons>
         <IconBack />
-      </Icons>
+      </Icons> */}
     </HeaderBar>
   )
 }

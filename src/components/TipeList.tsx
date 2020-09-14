@@ -49,16 +49,21 @@ const Loading = styled.div`
     }
   }
 `
-const Addbt = styled.div`
+const Addbt = styled.button`
   display: flex;
   align-items: center;
   padding: 24px 32px;
+  background-color: transparent;
+  outline: none;
+  border: none;
+  box-shadow: none;
   cursor: pointer;
   color: transparent;
   transition: 0.2s;
   font-size: 13px;
   text-align: center;
   svg {
+    transition: 0.2s;
     height: 1.3em;
     margin-right: 12px;
     fill: ${props => props.theme.textGrey};
@@ -66,7 +71,7 @@ const Addbt = styled.div`
   p {
     margin: 0;
   }
-  &:hover {
+  &:hover, &:focus {
     color: ${props => props.theme.textGrey};
     svg {
       fill: ${props => props.theme.textGreyDarker};
