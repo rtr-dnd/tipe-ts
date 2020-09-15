@@ -14,24 +14,43 @@ const HeaderBar = styled.div`
   justify-content: space-between;
   box-sizing: border-box;
   z-index: 10;
-  padding: 24px 48px;
-  align-items: center;
-  background-color: ${props => props.theme.backgroundTransparent};
+  padding: 8px 48px;
+  align-items: stretch;
   transition: 0.5s;
   svg {
     fill: ${props => props.theme.textGrey};
   }
 `
-const Logo = styled.img`
+const LogoSection = styled.div`
   flex-grow: 1;
+  flex-shrink: 1;
+  padding: 32px;
+  transition: 0.5s;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  background-color: ${props => props.theme.backgroundTransparent};
+`
+const Logo = styled.img`
   display: block;
-  margin: 16px;
   height: 32px;
-  margin-right: auto;
 `
 const Icons = styled.div`
   flex-grow: 1;
+  flex-shrink: 1;
+  padding: 32px 16px;
+  display: flex;
+  align-items: center;
   margin-left: auto;
+  transition: 0.5s;
+  background-color: ${props => props.theme.backgroundTransparent};
+`
+const EmptyThreadControl = styled.div`
+  flex-shrink: 1;
+  box-sizing: border-box;
+  flex-basis: 800px;
+  max-width: 800px;
+  background-color: transparent;
 `
 
 function Header () {
@@ -42,16 +61,18 @@ function Header () {
 
   return (
     <HeaderBar>
-      <Link to='/'>
-        <Logo src={themeContext.isDark ? logoDark : logoLight} alt='logo' />
-      </Link>
-      {threadId
+      <LogoSection>
+        <Link to='/'>
+          <Logo src={themeContext.isDark ? logoDark : logoLight} alt='logo' />
+        </Link>
+      </LogoSection>
+      {threadId !== 'no thread'
         ? <ThreadControl />
-        : <ThreadControl />
+        : <EmptyThreadControl />
       }
-      {/* <Icons>
+      <Icons>
         <IconBack />
-      </Icons> */}
+      </Icons>
     </HeaderBar>
   )
 }

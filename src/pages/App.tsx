@@ -55,9 +55,11 @@ const Content = styled.div`
 `
 const Login = styled.button`
   position: fixed;
+  bottom: 0;
 `
 const Dark = styled.button`
   position: fixed;
+  bottom: 0;
   left: 48px;
 `
 

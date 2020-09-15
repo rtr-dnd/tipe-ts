@@ -12,7 +12,7 @@ const Input = styled.input`
   outline: none;
   font-size: 18px;
   color: ${props => props.theme.textGrey};
-  background-color: ${props => props.theme.background};
+  background-color: transparent;
   transition: 0.5s;
   text-align: right;
   &::placeholder {

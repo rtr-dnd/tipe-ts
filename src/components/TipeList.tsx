@@ -32,6 +32,7 @@ const List = styled.div`
 const Loading = styled.div`
   display: flex;
   width: 100%;
+  box-sizing: border-box;
   padding: 40vh 32px 64px 32px;
   color: ${props => props.theme.textGrey};
   font-size: 14px;
