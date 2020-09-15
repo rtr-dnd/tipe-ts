@@ -158,6 +158,9 @@ export const librarySlice = createSlice({
       state.threads[action.payload.threadIndex].children.splice(action.payload.childIndex, 1)
       state.threads[action.payload.threadIndex].editDate = new Date().getTime()
       state.threads[action.payload.threadIndex].lastSessionId = state.sessionId
+    },
+    editTitleOfThread: (state, action: PayloadAction<indexPayload>) => {
+      state.threads[action.payload.index].title = action.payload.value
     }
   }
 })
@@ -176,7 +179,8 @@ export const {
   refreshSessionIdOfThread,
   removeThread,
   addTipeToThread,
-  removeTipeFromThread
+  removeTipeFromThread,
+  editTitleOfThread
 } = librarySlice.actions
 export const selectLibrary = (state: RootState) => state.library
 

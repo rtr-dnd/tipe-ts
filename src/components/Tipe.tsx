@@ -67,7 +67,7 @@ const Titles = styled.div`
     }
     .modified-date {
       height: 1em;
-      margin: 24px 0 12px 0;
+      margin: 12px 0 12px 0;
     }
     .button-with-icon {
       height: 1em;
@@ -88,7 +88,7 @@ const ModifiedDate = styled.p`
   color: ${props => props.theme.textGrey};
   transition: 0.5s;
   font-size: 13px;
-  margin: 24px 0 12px 0;
+  margin: 12px 0 12px 0;
   height: 1em;
 `
 const Divider = styled.div`
@@ -281,7 +281,6 @@ const Tipe = React.forwardRef<Editor, TipeProps>((props: TipeProps) => {
           {new Date(Number(library.tipes[props.index].editDate)).getMinutes()}:
           {new Date(Number(library.tipes[props.index].editDate)).getSeconds()}
         </ModifiedDate>
-        <Divider className={'hiding'} />
         {library.tipes[props.index].thread === null &&
           <ButtonWithIcon
             tabIndex={0}

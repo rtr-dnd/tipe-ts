@@ -13,13 +13,14 @@ const Input = styled.input`
   font-size: 18px;
   color: ${props => props.theme.textGrey};
   background-color: transparent;
-  transition: 0.5s;
+  transition: 0.1s;
   text-align: right;
   &::placeholder {
     color: ${props => props.theme.border};
     transition: 0.1s;
   }
   &:hover, &:focus {
+    color: ${props => props.theme.textGreyDarker};
     &::placeholder {
       color: ${props => props.theme.borderDarker};
     }

@@ -24,7 +24,7 @@ const HeaderBar = styled.div`
 const LogoSection = styled.div`
   flex-grow: 1;
   flex-shrink: 1;
-  padding: 32px;
+  padding: 24px;
   transition: 0.5s;
   display: flex;
   align-items: center;
@@ -38,7 +38,7 @@ const Logo = styled.img`
 const Icons = styled.div`
   flex-grow: 1;
   flex-shrink: 1;
-  padding: 32px 16px;
+  padding: 24px 16px;
   display: flex;
   align-items: center;
   margin-left: auto;
