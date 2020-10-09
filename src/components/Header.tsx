@@ -14,7 +14,7 @@ const HeaderBar = styled.div`
   justify-content: space-between;
   box-sizing: border-box;
   z-index: 10;
-  padding: 8px 48px;
+  padding: 8px 24px;
   align-items: stretch;
   transition: 0.5s;
   svg {
@@ -28,7 +28,7 @@ const LogoSection = styled.div`
   transition: 0.5s;
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: flex-start;
   background-color: ${props => props.theme.backgroundTransparent};
 `
 const Logo = styled.img`
@@ -41,6 +41,7 @@ const Icons = styled.div`
   padding: 24px 16px;
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   margin-left: auto;
   transition: 0.5s;
   background-color: ${props => props.theme.backgroundTransparent};
@@ -48,8 +49,8 @@ const Icons = styled.div`
 const EmptyThreadControl = styled.div`
   flex-shrink: 1;
   box-sizing: border-box;
-  flex-basis: 800px;
-  max-width: 800px;
+  flex-basis: 860px;
+  max-width: 860px;
   background-color: transparent;
 `
 

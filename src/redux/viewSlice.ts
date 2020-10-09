@@ -1,17 +1,29 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 import { RootState } from './store'
 
+export enum LoadingStatus{
+  loading,
+  migrating,
+  firstDataLoaded,
+  loaded
+}
+
+export enum ConnectedStatus {
+  connected,
+  disconnected
+}
+
 interface ViewState {
-  loadingStatus: string,
-  connectedStatus: string,
+  loadingStatus: LoadingStatus,
+  connectedStatus: ConnectedStatus,
   isDark: boolean,
   isFlipped: boolean,
   lang: string
 }
 
 const initialViewState: ViewState = {
-  loadingStatus: 'loading',
-  connectedStatus: 'connected',
+  loadingStatus: LoadingStatus.loading,
+  connectedStatus: ConnectedStatus.connected,
   isDark: false,
   isFlipped: false,
   lang: 'ja'
@@ -21,11 +33,13 @@ export const viewSlice = createSlice({
   name: 'view',
   initialState: initialViewState,
   reducers: {
-    setLoadingStatus: (state, action: PayloadAction<string>) => {
+    setLoadingStatus: (state, action: PayloadAction<LoadingStatus>) => {
       state.loadingStatus = action.payload
+      console.log('setLoadingStatus: ' + LoadingStatus[action.payload])
     },
-    setConnectedStatus: (state, action: PayloadAction<string>) => {
+    setConnectedStatus: (state, action: PayloadAction<ConnectedStatus>) => {
       state.connectedStatus = action.payload
+      console.log('setConnectedStatus: ' + ConnectedStatus[action.payload])
     },
     setIsDark: (state, action: PayloadAction<boolean>) => {
       state.isDark = action.payload

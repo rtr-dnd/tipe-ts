@@ -19,10 +19,13 @@ import {
   loadEveryTipesFromFirebase,
   loadFromFirebase,
   newTipeState,
-  addTipe
+  addTipe,
+  migrate
 } from '../redux/librarySlice'
 import {
   selectView,
+  LoadingStatus,
+  ConnectedStatus,
   setLoadingStatus,
   setConnectedStatus
 } from '../redux/viewSlice'
@@ -57,6 +60,11 @@ const Login = styled.button`
   position: fixed;
   bottom: 0;
 `
+const Logout = styled.button`
+  position: fixed;
+  bottom: 0;
+  left: 96px;
+`
 const Dark = styled.button`
   position: fixed;
   bottom: 0;
@@ -68,7 +76,7 @@ function App () {
   const view = useSelector(selectView)
 
   const loadFullData = async (entries: any, observer: any) => {
-    if (view.loadingStatus !== 'loaded') {
+    if (view.loadingStatus !== (LoadingStatus.loaded || LoadingStatus.migrating)) {
       entries.forEach(async (entry: any) => {
         if (entry.intersectionRatio > 0) {
           const prevDistanceFromBottom = document.body.scrollHeight - window.pageYOffset
@@ -77,8 +85,8 @@ function App () {
           window.scrollTo(0, document.body.scrollHeight - prevDistanceFromBottom)
           dispatch(loadFromFirebase())
           console.log('loading from firebase')
-          if (view.connectedStatus !== 'disconnected') {
-            dispatch(setLoadingStatus('loaded'))
+          if (view.connectedStatus !== ConnectedStatus.disconnected) {
+            dispatch(setLoadingStatus(LoadingStatus.loaded))
           }
         }
       })
@@ -90,54 +98,53 @@ function App () {
       rootMargin: '0px',
       threshold: 1
     }
-    if (view.connectedStatus !== 'disconnected') {
+    if (view.connectedStatus !== ConnectedStatus.disconnected && view.loadingStatus !== LoadingStatus.migrating) {
       await loadFirstTipesFromFirebase(dispatch)
-      dispatch(setLoadingStatus('first data loaded'))
+      dispatch(setLoadingStatus(LoadingStatus.firstDataLoaded))
       const observer = new IntersectionObserver(loadFullData, options)
       const target = document.querySelector('#loading-message')
       observer.observe(target as any)
     }
   }
 
-  firebase.auth().onAuthStateChanged((user) => {
-    console.log(user?.uid)
-  })
   const connectedRef = firebase.database().ref('.info/connected')
   connectedRef.on('value', function (snap) {
     if (snap.val() === true) {
-      console.log('connected')
-      dispatch(setConnectedStatus('connected'))
-      if (view.loadingStatus === 'loading') {
+      dispatch(setConnectedStatus(ConnectedStatus.connected))
+      if (view.loadingStatus === LoadingStatus.loading) {
         loadData()
       }
     } else {
-      console.log('disconnected')
-      dispatch(setConnectedStatus('disconnected'))
+      dispatch(setConnectedStatus(ConnectedStatus.disconnected))
     }
   })
   useEffect(() => {
-    console.log('loading data')
     const newTipe = newTipeState()
     dispatch(addTipe(newTipe))
   }, [])
 
   const [isDark, setIsDark] = useState<boolean>(true)
 
-  const onLogin = () => {
+  const onLogin = async () => {
     const provider = new firebase.auth.GoogleAuthProvider()
-    firebase.auth().signInWithPopup(provider).then((result) => {
-      if (result.credential != null) {
-        const user = result.user
-        console.log(user)
-        if (user != null) {
-          firestore.collection('users').doc(user.uid).get().then((doc) => {
-            if (doc !== undefined) {
-              console.log(doc.data())
-            }
-          })
+    const result = await firebase.auth().signInWithPopup(provider)
+    if (result.credential != null) {
+      const user = result.user
+      console.log(user)
+      if (user != null) {
+        const doc = await firestore.collection('users').doc(user.uid).get()
+        if (doc.exists && doc.data()?.migrated !== true) {
+          console.log('Needs migration')
+          dispatch(setLoadingStatus(LoadingStatus.migrating))
+          await migrate(doc, dispatch)
+          await firestore.collection('users').doc(user.uid).set({ migrated: true }, { merge: true })
+          dispatch(setLoadingStatus(LoadingStatus.loaded))
         }
       }
-    })
+    }
+  }
+  const onLogout = () => {
+    firebase.auth().signOut()
   }
 
   return (
@@ -145,6 +152,7 @@ function App () {
       <ThemeProvider theme={isDark ? dark : light}>
         <AppRoot>
           <Login onClick={onLogin}>Login</Login>
+          <Logout onClick={onLogout}>Logout</Logout>
           <Dark onClick={() => {
             setIsDark(!isDark)
             document.body.classList.toggle('dark')

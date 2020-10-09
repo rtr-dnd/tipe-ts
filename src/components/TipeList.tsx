@@ -14,12 +14,13 @@ import {
 } from '../redux/librarySlice'
 import {
   selectView,
-  setLoadingStatus
+  LoadingStatus,
+  setLoadingStatus, ConnectedStatus
 } from '../redux/viewSlice'
 import IconAdd from './icons/IconAdd'
 
 const List = styled.div`
-  max-width: 800px;
+  max-width: 860px;
   width: 100%;
   margin: 0 auto;
   min-height: 100vh;
@@ -112,14 +113,12 @@ function TipeList (props: TipeListProps) {
   return <List>
     <Addbt onClick={() => {
       const newTipe = newTipeState()
-      if (props.thread) {
-        newTipe.thread = props.thread
-      }
       dispatch(addTipe(newTipe))
       if (props.thread) {
         dispatch(addTipeToThread({
           threadIndex: indexOfThisThread,
-          childIndex: 0,
+          childIndexInThread: 0,
+          childIndexInTipes: 0,
           value: newTipe.id
         }))
         dispatch(pushThreadToFirebase(indexOfThisThread))
@@ -132,7 +131,7 @@ function TipeList (props: TipeListProps) {
       ? library.threads[indexOfThisThread].children.map((childId, i) => (
         <Tipe
           getRefByIndex={getRefByIndex}
-          forwardedRef={getOrCreateRef(childId)}
+          ref={getOrCreateRef(childId)}
           key={childId}
           index={library.tipes.findIndex((e) => { return e.id === childId })}
           indexOfThisThread={indexOfThisThread}
@@ -143,7 +142,7 @@ function TipeList (props: TipeListProps) {
       : library.tipes.map((thisTipe, i) => (
         <Tipe
           getRefByIndex={getRefByIndex}
-          forwardedRef={getOrCreateRef(thisTipe.id)}
+          ref={getOrCreateRef(thisTipe.id)}
           key={thisTipe.id}
           index={i}
           indexOfThisThread={indexOfThisThread}
@@ -158,10 +157,12 @@ function TipeList (props: TipeListProps) {
   </List>
 }
 
-function LoadingMessage (loadingStatus: string, connectedStatus: string) {
-  if (loadingStatus === 'loaded') {
+function LoadingMessage (loadingStatus: LoadingStatus, connectedStatus: ConnectedStatus) {
+  if (loadingStatus === LoadingStatus.migrating) {
+    return <p>Migrating from Tipe ver 1. Please wait...</p>
+  } else if (loadingStatus === LoadingStatus.loaded) {
     return <p>You've reached to the very top of your Tipes.</p>
-  } else if (connectedStatus === 'disconnected') {
+  } else if (connectedStatus === ConnectedStatus.disconnected) {
     return <p>Looks like you're offline.</p>
   } else {
     return <p className="loading">Loading...</p>

@@ -15,15 +15,16 @@ import {
   pushTipeToFirebase,
   removeTipeFromFirebase,
   pushThreadToFirebase,
-  editThreadOfTipe,
   newTipeState,
   addTipeToThread,
   removeTipeFromThread
 } from '../redux/librarySlice'
 import { selectView } from '../redux/viewSlice'
 import TitleInput from './TitleInput'
+import IconThread from './icons/IconThread'
 import IconAddThread from './icons/IconAddThread'
 import IconThreadMore from './icons/IconThreadMore'
+import IconForward from './icons/IconForward'
 import { Redirect } from 'react-router-dom'
 
 const TipeContainer = styled.div`
@@ -35,6 +36,7 @@ const TipeContainer = styled.div`
 const Texts = styled.div`
   flex-grow: 1;
   flex-shrink: 1;
+  min-width: 0;
   margin: 48px 0;
   p, div {
     font-size: 14px;
@@ -47,10 +49,29 @@ const Texts = styled.div`
       transition: 0.5s;
     }
   }
-  
+`
+const ThreadBar = styled.div`
+  padding-bottom: 16px;
+  cursor: pointer;
+  margin-bottom: 24px;
+  border-bottom: 1px solid ${props => props.theme.border};
+  display: flex;
+  align-items: center;
+  color: ${props => props.theme.textGrey};
+  svg {
+    width: 16px;
+    fill: ${props => props.theme.textGrey};
+  }
+  p {
+    margin: 0 0 0 8px;
+    color: ${props => props.theme.textGrey};
+  }
+`
+const PreviousTipePreview = styled.p`
+  flex-grow: 1;
 `
 const Titles = styled.div`
-  width: 35%;
+  width: 30%;
   flex-shrink: 0;
   padding: 48px 0 48px 16px;
   display: flex;
@@ -59,11 +80,18 @@ const Titles = styled.div`
   align-items: flex-end;
   .hiding {
     transition: opacity 0.3s;
-    opacity: 0.3;
+    opacity: 0.4;
+    p {
+      transition: opacity 0.3s;
+      opacity: 0;
+    }
   }
   &:hover {
     .hiding {
       opacity: 100%;
+      p {
+        opacity: 100%;
+      }
     }
     .modified-date {
       height: 1em;
@@ -80,7 +108,7 @@ const Spacer = styled.div`
 `
 const Sticky = styled.div`
   position: sticky;
-  bottom: 48px;
+  bottom: 80px;
   display: flex;
   flex-direction: column-reverse;
 `
@@ -115,10 +143,14 @@ const ButtonWithIcon = styled.button`
     padding-right: 8px;
   }
   svg {
+    width: 16px;
     fill: ${props => props.theme.textGrey};
   }
   &:hover, &:focus {
     opacity: 100%;
+    p {
+      opacity: 100%;
+    }
     outline: none;
     color: ${props => props.theme.textGreyDarker};
     svg {
@@ -132,19 +164,18 @@ interface TipeProps {
   indexOfThisThread: number,
   indexInContext: number,
   readonly?: boolean,
-  forwardedRef: RefObject<Editor>,
   getRefByIndex: any
 }
-const Tipe = React.forwardRef<Editor, TipeProps>((props: TipeProps) => {
+const Tipe = React.forwardRef<Editor, TipeProps>((props: TipeProps, ref: any) => {
   const library = useSelector(selectLibrary)
   const dispatch = useDispatch()
 
-  const editorRef = props.forwardedRef
+  const editorRef = ref
   useEffect(() => {
     if (props.index === 0 && editorRef && editorRef.current) {
       editorRef.current.focusAtEnd()
     }
-  }, [])
+  }, [editorRef, props.index])
 
   let textTimeout: ReturnType<typeof setTimeout>
   const onTextChange = (valueFunc: () => string) => {
@@ -196,13 +227,6 @@ const Tipe = React.forwardRef<Editor, TipeProps>((props: TipeProps) => {
             : library.threads[props.indexOfThisThread].children.length
           if (props.indexInContext < lengthOfContext - 1) {
             props.getRefByIndex(props.index, 1).current.focusAtEnd()
-            if (props.indexOfThisThread !== -1) {
-              dispatch(removeTipeFromThread({
-                threadIndex: props.indexOfThisThread,
-                childIndex: library.threads[props.indexOfThisThread].children.findIndex((element) => { return element === library.tipes[props.index].id }),
-                value: ''
-              }))
-            }
             dispatch(removeTipeFromFirebase(library.tipes[props.index].id))
             dispatch(removeTipe(props.index))
           }
@@ -211,14 +235,12 @@ const Tipe = React.forwardRef<Editor, TipeProps>((props: TipeProps) => {
       case 'Enter':
         if (e.getModifierState('Meta') || e.getModifierState('Control')) {
           const newTipe = newTipeState()
-          if (props.indexOfThisThread !== -1) {
-            newTipe.thread = library.threads[props.indexOfThisThread].id
-          }
           dispatch(addTipe(newTipe))
           if (props.indexOfThisThread !== -1) {
             dispatch(addTipeToThread({
               threadIndex: props.indexOfThisThread,
-              childIndex: 0,
+              childIndexInThread: 0,
+              childIndexInTipes: 0,
               value: newTipe.id
             }))
           }
@@ -253,6 +275,20 @@ const Tipe = React.forwardRef<Editor, TipeProps>((props: TipeProps) => {
   return <TipeContainer>
     {redirect && <Redirect push to={redirectPath} />}
     <Texts>
+      {(library.tipes[props.index].thread && props.indexOfThisThread === -1) &&
+        <ThreadBar
+          onClick={() => handleRedirect('/thread/' + library.tipes[props.index].thread)}>
+          <IconThread />
+          <p>スレッド</p>
+          <p>•</p>
+          <PreviousTipePreview>
+            { library.threads.find((element) => { return library.tipes[props.index].thread === element.id })?.children.findIndex((element) => { return element === library.tipes[props.index].id }) === 0
+              ? <span>スレッド最初</span>
+              : <span>スレッド最初でない</span>}
+          </PreviousTipePreview>
+          <IconForward />
+        </ThreadBar>
+      }
       <Editor
         ref={editorRef}
         key={library.tipes[props.index].lastSessionId}
@@ -286,9 +322,14 @@ const Tipe = React.forwardRef<Editor, TipeProps>((props: TipeProps) => {
             tabIndex={0}
             className={'hiding button-with-icon'}
             onClick={() => {
-              const newThread = newThreadState(library.tipes[props.index].id)
+              const newThread = newThreadState()
               dispatch(addThread(newThread))
-              dispatch(editThreadOfTipe({ index: props.index, value: newThread.id }))
+              dispatch(addTipeToThread({
+                threadIndex: 0,
+                childIndexInThread: 0,
+                childIndexInTipes: props.index,
+                value: library.tipes[props.index].id
+              }))
               dispatch(pushThreadToFirebase(0))
               handleRedirect('/thread/' + newThread.id)
             }}>
@@ -301,7 +342,8 @@ const Tipe = React.forwardRef<Editor, TipeProps>((props: TipeProps) => {
             tabIndex={0}
             className={'hiding button-with-icon'}
             onClick={() => handleRedirect('/thread/' + library.tipes[props.index].thread)}>
-            <p>Go to thread</p>
+            <p>スレッドに移動</p>
+            <IconForward />
           </ButtonWithIcon>
         }
         <ButtonWithIcon

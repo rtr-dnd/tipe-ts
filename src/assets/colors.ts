@@ -25,8 +25,8 @@ export const dark: Theme = {
   text: 'rgba(255, 255, 255, 0.83)',
   textGrey: 'rgba(255, 255, 255, 0.51)',
   textGreyDarker: 'rgba(255, 255, 255, 0.7)',
-  border: 'rgba(255, 255, 255, 0.16)',
-  borderDarker: 'rgba(255, 255, 255, 0.25)',
+  border: 'rgba(255, 255, 255, 0.18)',
+  borderDarker: 'rgba(255, 255, 255, 0.30)',
   background: '#000',
   backgroundTransparent: 'rgba(0, 0, 0, 0.9)'
 }

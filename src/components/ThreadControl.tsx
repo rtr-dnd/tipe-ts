@@ -7,16 +7,17 @@ import { selectLibrary, editTitleOfThread, pushThreadToFirebase } from '../redux
 
 import IconBack from './icons/IconBack'
 import IconThread from './icons/IconThread'
+import IconSettings from './icons/IconSettings'
 
 const Container = styled.div`
   // flex-grow: 1;
   flex-shrink: 1;
   box-sizing: border-box;
   display: flex;
-  flex-basis: 800px;
-  max-width: 800px;
+  flex-basis: 860px;
+  max-width: 860px;
   align-items: center;
-  padding: 24px 16px;
+  padding: 0 16px;
   background-color: ${props => props.theme.backgroundTransparent};
   color: ${props => props.theme.textGrey};
   transition: 0.5s;
@@ -27,7 +28,7 @@ const ThreadTitleContainer = styled.div`
 `
 const ThreadIndicator = styled.div`
   display: flex;
-  font-size: 12px;
+  font-size: 13px;
   color: ${props => props.theme.textGrey}
   vertical-align: middle;
   margin-bottom: 2px;
@@ -42,7 +43,7 @@ const ThreadIndicator = styled.div`
     align-items: center;
     padding: 0 4px;
     transition: 0.5s;
-    height: 1.3em;
+    width: 14px;
   }`
 
 const Input = styled.input`
@@ -63,6 +64,14 @@ const Input = styled.input`
     &::placeholder {
       color: ${props => props.theme.borderDarker};
     }
+  }
+`
+const Settings = styled.div`
+  display: flex;
+  font-size: 14px;
+  svg {
+    width: 20px;
+    margin-left: 8px;
   }
 `
 
@@ -105,6 +114,10 @@ function ThreadControl () {
           onChange={onTitleChange}
           placeholder="スレッドタイトルを追加" />
       </ThreadTitleContainer>
+      <Settings>
+        <p>スレッドの設定</p>
+        <IconSettings />
+      </Settings>
     </Container>
   )
 }

@@ -6,7 +6,21 @@ import { Dispatch } from 'redux'
 import { RootState } from './store'
 import { v4 as uuidv4 } from 'uuid'
 
+import * as firebase from 'firebase'
 import { firestore } from '../firebase'
+
+let user: string | undefined
+let doc: firebase.firestore.DocumentReference
+let lastDoc: firebase.firestore.QueryDocumentSnapshot<firebase.firestore.DocumentData> | null = null
+firebase.auth().onAuthStateChanged((thisUser) => {
+  console.log('in library: ' + thisUser?.uid)
+  if (thisUser) {
+    user = thisUser?.uid
+  } else {
+    user = 'temp-' + uuidv4()
+  }
+  doc = firestore.collection('ver2users').doc(user)
+})
 
 interface TipeState {
     id: string,
@@ -42,12 +56,12 @@ interface ThreadState {
   lastSessionId: string
 }
 
-export function newThreadState (parent: string) : ThreadState {
+export function newThreadState () : ThreadState {
   return {
     id: uuidv4(),
     is: 'thread',
     title: '',
-    children: [parent],
+    children: [],
     createDate: new Date().getTime(),
     editDate: new Date().getTime(),
     lastSessionId: ''
@@ -77,7 +91,8 @@ interface indexPayload {
 
 interface threadPayload {
   threadIndex: number,
-  childIndex: number,
+  childIndexInThread: number,
+  childIndexInTipes: number,
   value: string
 }
 
@@ -107,6 +122,11 @@ export const librarySlice = createSlice({
       state.tipes[action.payload].lastSessionId = state.sessionId
     },
     removeTipe: (state, action: PayloadAction<number>) => {
+      const thisTipe = state.tipes[action.payload]
+      if (thisTipe.thread) {
+        const thisThreadChildren = state.threads.find((element) => { return element.id === thisTipe.thread })?.children
+        if (thisThreadChildren) thisThreadChildren.splice(thisThreadChildren.indexOf(thisTipe.id), 1)
+      }
       state.tipes.splice(action.payload, 1)
     },
     editTextOfTipe: (state, action: PayloadAction<indexPayload>) => {
@@ -119,7 +139,7 @@ export const librarySlice = createSlice({
       state.tipes[action.payload.index].editDate = new Date().getTime()
       state.tipes[action.payload.index].lastSessionId = state.sessionId
     },
-    editThreadOfTipe: (state, action: PayloadAction<indexPayload>) => {
+    editThreadOfTipe: (state, action: PayloadAction<indexPayload>) => { // todo: これは混乱するのでaddTipeToThreadに統一
       state.tipes[action.payload.index].thread = action.payload.value
       state.tipes[action.payload.index].editDate = new Date().getTime()
       state.tipes[action.payload.index].lastSessionId = state.sessionId
@@ -146,21 +166,33 @@ export const librarySlice = createSlice({
       state.threads[action.payload].lastSessionId = state.sessionId
     },
     removeThread: (state, action: PayloadAction<number>) => {
+      const thisThread = state.threads[action.payload]
+      state.tipes.forEach(element => {
+        if (element.thread === thisThread.id) {
+          element.thread = null
+        }
+      })
       state.threads.splice(action.payload, 1)
     },
     addTipeToThread: (state, action: PayloadAction<threadPayload>) => {
+      // 追加するTipeの編集
+      state.tipes[action.payload.childIndexInTipes].thread = state.threads[action.payload.threadIndex].id
+      state.tipes[action.payload.childIndexInTipes].editDate = new Date().getTime()
+      state.tipes[action.payload.childIndexInTipes].lastSessionId = state.sessionId
       // 注意：Tipesと同様threadsのchildrenも新しいものが先頭になるようにする
-      state.threads[action.payload.threadIndex].children.splice(action.payload.childIndex, 0, action.payload.value)
+      state.threads[action.payload.threadIndex].children.splice(action.payload.childIndexInThread, 0, action.payload.value)
       state.threads[action.payload.threadIndex].editDate = new Date().getTime()
       state.threads[action.payload.threadIndex].lastSessionId = state.sessionId
     },
     removeTipeFromThread: (state, action: PayloadAction<threadPayload>) => {
-      state.threads[action.payload.threadIndex].children.splice(action.payload.childIndex, 1)
+      state.threads[action.payload.threadIndex].children.splice(action.payload.childIndexInThread, 1)
       state.threads[action.payload.threadIndex].editDate = new Date().getTime()
       state.threads[action.payload.threadIndex].lastSessionId = state.sessionId
     },
     editTitleOfThread: (state, action: PayloadAction<indexPayload>) => {
       state.threads[action.payload.index].title = action.payload.value
+      state.threads[action.payload.index].editDate = new Date().getTime()
+      state.threads[action.payload.index].lastSessionId = state.sessionId
     }
   }
 })
@@ -172,7 +204,7 @@ export const {
   removeTipe,
   editTextOfTipe,
   editTitleOfTipe,
-  editThreadOfTipe,
+  // editThreadOfTipe,
 
   addThread,
   loadThread,
@@ -186,7 +218,7 @@ export const selectLibrary = (state: RootState) => state.library
 
 export const loadFirstTipesFromFirebase = async (dispatch: Dispatch<any>) => {
   return new Promise((resolve) => {
-    firestore.collection('ver2users').doc('sZYKVb4GeOBrj69E28sB').collection('tipes')
+    doc.collection('tipes')
       .where('is', '==', 'tipe')
       .orderBy('createDate', 'desc')
       .limit(5)
@@ -200,9 +232,32 @@ export const loadFirstTipesFromFirebase = async (dispatch: Dispatch<any>) => {
       })
   })
 }
+export const loadTipesIncementallyFromFirebse = async (dispatch: Dispatch<any>) => {
+  return new Promise((resolve) => {
+    const index = lastDoc === null
+      ? doc.collection('tipes')
+        .where('is', '==', 'tipe')
+        .orderBy('createDate', 'desc')
+        .limit(5)
+      : doc.collection('tipes')
+        .where('is', '==', 'tipe')
+        .orderBy('createDate', 'desc')
+        .startAfter(lastDoc)
+        .limit(5)
+
+    index.get().then((querySnapshot) => {
+      querySnapshot.forEach((doc) => {
+        dispatch(loadTipe(doc.data() as TipeState))
+      })
+      lastDoc = querySnapshot.docs[querySnapshot.docs.length - 1]
+    }).then(() => {
+      resolve()
+    })
+  })
+}
 export const loadEveryTipesFromFirebase = async (dispatch: Dispatch<any>) => {
   return new Promise((resolve) => {
-    firestore.collection('ver2users').doc('sZYKVb4GeOBrj69E28sB').collection('tipes')
+    doc.collection('tipes')
       .where('is', '==', 'tipe')
       .orderBy('createDate', 'desc')
       .get().then((querySnapshot) => {
@@ -217,7 +272,7 @@ export const loadEveryTipesFromFirebase = async (dispatch: Dispatch<any>) => {
 
 export const loadFromFirebase = () => {
   return (dispatch: Dispatch<any>, getState: () => {library: LibraryState}) => {
-    firestore.collection('ver2users').doc('sZYKVb4GeOBrj69E28sB').collection('tipes')
+    doc.collection('tipes')
       .where('is', '==', 'tipe')
       .orderBy('createDate', 'desc')
       // .limit(5)
@@ -249,9 +304,9 @@ export const loadFromFirebase = () => {
           }
         })
       })
-    firestore.collection('ver2users').doc('sZYKVb4GeOBrj69E28sB').collection('threads')
+    doc.collection('threads')
       .where('is', '==', 'thread')
-      .orderBy('createDate', 'desc')
+      .orderBy('editDate', 'desc')
       // .limit(5)
       .onSnapshot((querySnapshot) => {
         querySnapshot.docChanges().forEach(change => {
@@ -286,29 +341,43 @@ export const loadFromFirebase = () => {
 export const pushTipeToFirebase = (index: number) => {
   return (dispatch: Dispatch<any>, getState: ()=>{library: LibraryState}) => {
     const stateBefore = getState()
-    firestore.collection('ver2users').doc('sZYKVb4GeOBrj69E28sB').collection('tipes')
+    doc.collection('tipes')
       .doc(stateBefore.library.tipes[index].id)
       .set(Object.assign({}, stateBefore.library.tipes[index]), { merge: true })
   }
 }
 export const removeTipeFromFirebase = (id: string) => {
   return () => {
-    firestore.collection('ver2users').doc('sZYKVb4GeOBrj69E28sB').collection('tipes')
+    doc.collection('tipes')
       .doc(id).delete()
   }
 }
 export const pushThreadToFirebase = (index: number) => {
   return (dispatch: Dispatch<any>, getState: ()=>{library: LibraryState}) => {
     const stateBefore = getState()
-    firestore.collection('ver2users').doc('sZYKVb4GeOBrj69E28sB').collection('threads')
+    doc.collection('threads')
       .doc(stateBefore.library.threads[index].id)
       .set(Object.assign({}, stateBefore.library.threads[index]), { merge: true })
   }
 }
 export const removeThreadFromFirebase = (id: string) => {
   return () => {
-    firestore.collection('ver2users').doc('sZYKVb4GeOBrj69E28sB').collection('threads')
+    doc.collection('threads')
       .doc(id).delete()
+  }
+}
+
+export const migrate = async (ver1doc: firebase.firestore.DocumentSnapshot<firebase.firestore.DocumentData>, dispatch: Dispatch<any>) => {
+  console.log('migration func')
+  const data = ver1doc.data()
+  if (data !== undefined) {
+    data.content.forEach((element: {text: string, title: string}) => {
+      const newTipe = newTipeState()
+      newTipe.title = element.title
+      newTipe.text = element.text
+      dispatch(addTipe(newTipe))
+      dispatch(pushTipeToFirebase(0))
+    })
   }
 }
 
