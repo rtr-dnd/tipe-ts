@@ -15,12 +15,11 @@ import IndexPage from './IndexPage'
 import ThreadPage from './ThreadPage'
 
 import {
-  loadFirstTipesFromFirebase,
   loadEveryTipesFromFirebase,
   loadFromFirebase,
   newTipeState,
   addTipe,
-  migrate
+  migrate, loadTipesIncementallyFromFirebase
 } from '../redux/librarySlice'
 import {
   selectView,
@@ -93,15 +92,35 @@ function App () {
     }
   }
 
+  const loadDataIncrementally = async (entries: any, observer: any) => {
+    entries.forEach(async (entry: any) => {
+      if (view.loadingStatus !== (LoadingStatus.loaded || LoadingStatus.migrating)) {
+        console.log(view.loadingStatus)
+        if (entry.intersectionRatio > 0) {
+          const prevDistanceFromBottom = document.body.scrollHeight - window.pageYOffset
+          await loadTipesIncementallyFromFirebase(dispatch)
+          window.scrollTo(0, document.body.scrollHeight - prevDistanceFromBottom)
+          // dispatch(loadFromFirebase())
+          // console.log('loading from firebase')
+          // if (view.connectedStatus !== ConnectedStatus.disconnected) {
+          //   dispatch(setLoadingStatus(LoadingStatus.loaded))
+          // }
+        }
+      }
+    })
+  }
+
   const loadData = async () => {
+    console.log(view.loadingStatus)
     const options = {
       rootMargin: '0px',
       threshold: 1
     }
     if (view.connectedStatus !== ConnectedStatus.disconnected && view.loadingStatus !== LoadingStatus.migrating) {
-      await loadFirstTipesFromFirebase(dispatch)
+      await loadTipesIncementallyFromFirebase(dispatch)
       dispatch(setLoadingStatus(LoadingStatus.firstDataLoaded))
-      const observer = new IntersectionObserver(loadFullData, options)
+      console.log(view.loadingStatus)
+      const observer = new IntersectionObserver(loadDataIncrementally, options)
       const target = document.querySelector('#loading-message')
       observer.observe(target as any)
     }
@@ -157,6 +176,7 @@ function App () {
             setIsDark(!isDark)
             document.body.classList.toggle('dark')
           }}>Dark</Dark>
+          <button onClick={() => { console.log(LoadingStatus[view.loadingStatus]) }}>あ</button>
           <AnimatedApp />
         </AppRoot>
       </ThemeProvider>

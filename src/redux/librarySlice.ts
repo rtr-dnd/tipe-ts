@@ -8,6 +8,7 @@ import { v4 as uuidv4 } from 'uuid'
 
 import * as firebase from 'firebase'
 import { firestore } from '../firebase'
+import { LoadingStatus, setLoadingStatus } from './viewSlice'
 
 let user: string | undefined
 let doc: firebase.firestore.DocumentReference
@@ -232,7 +233,8 @@ export const loadFirstTipesFromFirebase = async (dispatch: Dispatch<any>) => {
       })
   })
 }
-export const loadTipesIncementallyFromFirebse = async (dispatch: Dispatch<any>) => {
+
+export const loadTipesIncementallyFromFirebase = async (dispatch: Dispatch<any>) => {
   return new Promise((resolve) => {
     const index = lastDoc === null
       ? doc.collection('tipes')
@@ -249,7 +251,12 @@ export const loadTipesIncementallyFromFirebse = async (dispatch: Dispatch<any>) 
       querySnapshot.forEach((doc) => {
         dispatch(loadTipe(doc.data() as TipeState))
       })
-      lastDoc = querySnapshot.docs[querySnapshot.docs.length - 1]
+      lastDoc = querySnapshot.docs.length === 0
+        ? null
+        : querySnapshot.docs[querySnapshot.docs.length - 1]
+      if (querySnapshot.docs.length === 0) {
+        dispatch(setLoadingStatus(LoadingStatus.loaded))
+      }
     }).then(() => {
       resolve()
     })

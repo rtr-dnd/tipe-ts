@@ -111,6 +111,9 @@ function TipeList (props: TipeListProps) {
   }
 
   return <List>
+    <button onClick={() => {
+      console.log(LoadingStatus[view.loadingStatus])
+    }}></button>
     <Addbt onClick={() => {
       const newTipe = newTipeState()
       dispatch(addTipe(newTipe))
