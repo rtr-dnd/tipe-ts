@@ -8,6 +8,7 @@ import {
 import { TransitionGroup, CSSTransition } from 'react-transition-group'
 import styled, { ThemeProvider } from 'styled-components'
 import { useDispatch, useSelector } from 'react-redux'
+import { useInView } from 'react-intersection-observer'
 
 import { light, dark } from '../assets/colors'
 import Header from '../components/Header'
@@ -74,6 +75,11 @@ function App () {
   const dispatch = useDispatch()
   const view = useSelector(selectView)
 
+  const { ref, inView, entry } = useInView({
+    threshold: 1,
+    rootMargin: '0px'
+  })
+
   const loadFullData = async (entries: any, observer: any) => {
     if (view.loadingStatus !== (LoadingStatus.loaded || LoadingStatus.migrating)) {
       entries.forEach(async (entry: any) => {
@@ -120,9 +126,9 @@ function App () {
       await loadTipesIncementallyFromFirebase(dispatch)
       dispatch(setLoadingStatus(LoadingStatus.firstDataLoaded))
       console.log(view.loadingStatus)
-      const observer = new IntersectionObserver(loadDataIncrementally, options)
-      const target = document.querySelector('#loading-message')
-      observer.observe(target as any)
+      // const observer = new IntersectionObserver(loadDataIncrementally, options)
+      // const target = document.querySelector('#loading-message')
+      // observer.observe(target as any)
     }
   }
 
@@ -176,7 +182,9 @@ function App () {
             setIsDark(!isDark)
             document.body.classList.toggle('dark')
           }}>Dark</Dark>
-          <button onClick={() => { console.log(LoadingStatus[view.loadingStatus]) }}>あ</button>
+          <button onClick={() => { console.log(LoadingStatus[view.loadingStatus]) }}>
+            {inView.toString}
+          </button>
           <AnimatedApp />
         </AppRoot>
       </ThemeProvider>
