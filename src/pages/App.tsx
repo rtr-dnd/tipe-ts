@@ -9,6 +9,8 @@ import { TransitionGroup, CSSTransition } from 'react-transition-group'
 import styled, { ThemeProvider } from 'styled-components'
 import { useDispatch, useSelector } from 'react-redux'
 
+import { useReduxDispatch } from '../redux/storeHelper'
+
 import { light, dark } from '../assets/colors'
 import Header from '../components/Header'
 import IndexPage from './IndexPage'
@@ -19,7 +21,7 @@ import {
   loadFromFirebase,
   newTipeState,
   addTipe,
-  migrate, loadTipesIncementallyFromFirebase
+  migrate, loadTipesIncementallyFromFirebase, loadThreadsFromFirebase
 } from '../redux/librarySlice'
 import {
   selectView,
@@ -72,6 +74,7 @@ const Dark = styled.button`
 
 function App () {
   const dispatch = useDispatch()
+  const reduxDispatch = useReduxDispatch()
   const view = useSelector(selectView)
 
   const loadFullData = async (entries: any, observer: any) => {
@@ -98,9 +101,9 @@ function App () {
       dispatch(setConnectedStatus(ConnectedStatus.connected))
       if (view.loadingStatus === LoadingStatus.loading) {
         // load initial data (even if loadingmessage is not visible)
-        loadTipesIncementallyFromFirebase(dispatch).then(() => {
+        reduxDispatch(loadThreadsFromFirebase()).then(() => reduxDispatch(loadTipesIncementallyFromFirebase()).then(() => {
           dispatch(setLoadingStatus(LoadingStatus.firstDataLoaded))
-        })
+        }))
       }
     } else {
       dispatch(setConnectedStatus(ConnectedStatus.disconnected))

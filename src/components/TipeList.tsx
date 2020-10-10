@@ -7,6 +7,8 @@ import { useInView } from 'react-intersection-observer'
 // eslint-disable-next-line
 import Editor from 'tipe-markdown-editor'
 
+import { useReduxDispatch } from '../redux/storeHelper'
+
 import Tipe from './Tipe'
 import {
   selectLibrary,
@@ -92,6 +94,7 @@ interface TipeListProps {
 
 function TipeList (props: TipeListProps) {
   const dispatch = useDispatch()
+  const reduxDispatch = useReduxDispatch()
   const library = useSelector(selectLibrary)
   const view = useSelector(selectView)
   // eslint-disable-next-line
@@ -104,7 +107,7 @@ function TipeList (props: TipeListProps) {
       console.log(LoadingStatus[view.loadingStatus])
       if (view.loadingStatus !== (LoadingStatus.loaded || LoadingStatus.migrating)) {
         const prevDistanceFromBottom = document.body.scrollHeight - window.pageYOffset
-        loadTipesIncementallyFromFirebase(dispatch).then(() => {
+        reduxDispatch(loadTipesIncementallyFromFirebase()).then(() => {
           window.scrollTo(0, document.body.scrollHeight - prevDistanceFromBottom)
         })
       }

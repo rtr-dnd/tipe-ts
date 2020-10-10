@@ -41,7 +41,6 @@ export const viewSlice = createSlice({
     },
     setConnectedStatus: (state, action: PayloadAction<ConnectedStatus>) => {
       state.connectedStatus = action.payload
-      console.log('setConnectedStatus: ' + ConnectedStatus[state.connectedStatus])
     },
     setIsDark: (state, action: PayloadAction<boolean>) => {
       state.isDark = action.payload
