@@ -8,7 +8,6 @@ import {
 import { TransitionGroup, CSSTransition } from 'react-transition-group'
 import styled, { ThemeProvider } from 'styled-components'
 import { useDispatch, useSelector } from 'react-redux'
-import { useInView } from 'react-intersection-observer'
 
 import { light, dark } from '../assets/colors'
 import Header from '../components/Header'
@@ -75,11 +74,6 @@ function App () {
   const dispatch = useDispatch()
   const view = useSelector(selectView)
 
-  const { ref, inView, entry } = useInView({
-    threshold: 1,
-    rootMargin: '0px'
-  })
-
   const loadFullData = async (entries: any, observer: any) => {
     if (view.loadingStatus !== (LoadingStatus.loaded || LoadingStatus.migrating)) {
       entries.forEach(async (entry: any) => {
@@ -98,46 +92,15 @@ function App () {
     }
   }
 
-  const loadDataIncrementally = async (entries: any, observer: any) => {
-    entries.forEach(async (entry: any) => {
-      if (view.loadingStatus !== (LoadingStatus.loaded || LoadingStatus.migrating)) {
-        console.log(view.loadingStatus)
-        if (entry.intersectionRatio > 0) {
-          const prevDistanceFromBottom = document.body.scrollHeight - window.pageYOffset
-          await loadTipesIncementallyFromFirebase(dispatch)
-          window.scrollTo(0, document.body.scrollHeight - prevDistanceFromBottom)
-          // dispatch(loadFromFirebase())
-          // console.log('loading from firebase')
-          // if (view.connectedStatus !== ConnectedStatus.disconnected) {
-          //   dispatch(setLoadingStatus(LoadingStatus.loaded))
-          // }
-        }
-      }
-    })
-  }
-
-  const loadData = async () => {
-    console.log(view.loadingStatus)
-    const options = {
-      rootMargin: '0px',
-      threshold: 1
-    }
-    if (view.connectedStatus !== ConnectedStatus.disconnected && view.loadingStatus !== LoadingStatus.migrating) {
-      await loadTipesIncementallyFromFirebase(dispatch)
-      dispatch(setLoadingStatus(LoadingStatus.firstDataLoaded))
-      console.log(view.loadingStatus)
-      // const observer = new IntersectionObserver(loadDataIncrementally, options)
-      // const target = document.querySelector('#loading-message')
-      // observer.observe(target as any)
-    }
-  }
-
   const connectedRef = firebase.database().ref('.info/connected')
   connectedRef.on('value', function (snap) {
     if (snap.val() === true) {
       dispatch(setConnectedStatus(ConnectedStatus.connected))
       if (view.loadingStatus === LoadingStatus.loading) {
-        loadData()
+        // load initial data (even if loadingmessage is not visible)
+        loadTipesIncementallyFromFirebase(dispatch).then(() => {
+          dispatch(setLoadingStatus(LoadingStatus.firstDataLoaded))
+        })
       }
     } else {
       dispatch(setConnectedStatus(ConnectedStatus.disconnected))
@@ -182,9 +145,6 @@ function App () {
             setIsDark(!isDark)
             document.body.classList.toggle('dark')
           }}>Dark</Dark>
-          <button onClick={() => { console.log(LoadingStatus[view.loadingStatus]) }}>
-            {inView.toString}
-          </button>
           <AnimatedApp />
         </AppRoot>
       </ThemeProvider>

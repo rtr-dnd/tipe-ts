@@ -236,6 +236,7 @@ export const loadFirstTipesFromFirebase = async (dispatch: Dispatch<any>) => {
 
 export const loadTipesIncementallyFromFirebase = async (dispatch: Dispatch<any>) => {
   return new Promise((resolve) => {
+    if (!doc) return
     const index = lastDoc === null
       ? doc.collection('tipes')
         .where('is', '==', 'tipe')

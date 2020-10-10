@@ -1,8 +1,8 @@
+// eslint-disable-next-line
 import React, { useEffect, useState, RefObject } from 'react'
 import Editor from 'tipe-markdown-editor'
 import { useSelector, useDispatch } from 'react-redux'
 import styled from 'styled-components'
-import { v4 as uuidv4 } from 'uuid'
 
 import {
   newThreadState,
@@ -19,7 +19,6 @@ import {
   addTipeToThread,
   removeTipeFromThread
 } from '../redux/librarySlice'
-import { selectView } from '../redux/viewSlice'
 import TitleInput from './TitleInput'
 import IconThread from './icons/IconThread'
 import IconAddThread from './icons/IconAddThread'
@@ -118,13 +117,6 @@ const ModifiedDate = styled.p`
   font-size: 13px;
   margin: 12px 0 12px 0;
   height: 1em;
-`
-const Divider = styled.div`
-  display: block;
-  margin-right: 0;
-  margin-left: auto;
-  width: 32px;
-  border-bottom: 1px solid ${props => props.theme.border};
 `
 const ButtonWithIcon = styled.button`
   background-color: transparent;

@@ -1,6 +1,10 @@
+/* eslint-disable react/no-unescaped-entities */
+// eslint-disable-next-line
 import React, { useEffect, RefObject } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import styled from 'styled-components'
+import { useInView } from 'react-intersection-observer'
+// eslint-disable-next-line
 import Editor from 'tipe-markdown-editor'
 
 import Tipe from './Tipe'
@@ -9,13 +13,13 @@ import {
   addTipe,
   addTipeToThread,
   newTipeState,
-  loadFromFirebase,
+  loadTipesIncementallyFromFirebase,
   pushThreadToFirebase
 } from '../redux/librarySlice'
 import {
   selectView,
   LoadingStatus,
-  setLoadingStatus, ConnectedStatus
+  ConnectedStatus
 } from '../redux/viewSlice'
 import IconAdd from './icons/IconAdd'
 
@@ -90,6 +94,23 @@ function TipeList (props: TipeListProps) {
   const dispatch = useDispatch()
   const library = useSelector(selectLibrary)
   const view = useSelector(selectView)
+  // eslint-disable-next-line
+  const { ref, inView, entry } = useInView({
+    threshold: 1,
+    rootMargin: '0px'
+  })
+  useEffect(() => {
+    if (inView) {
+      console.log(LoadingStatus[view.loadingStatus])
+      if (view.loadingStatus !== (LoadingStatus.loaded || LoadingStatus.migrating)) {
+        const prevDistanceFromBottom = document.body.scrollHeight - window.pageYOffset
+        loadTipesIncementallyFromFirebase(dispatch).then(() => {
+          window.scrollTo(0, document.body.scrollHeight - prevDistanceFromBottom)
+        })
+      }
+    }
+  }, [inView])
+
   const indexOfThisThread = props.thread
     ? library.threads.findIndex((element) => { return element.id === props.thread })
     : -1
@@ -111,9 +132,6 @@ function TipeList (props: TipeListProps) {
   }
 
   return <List>
-    <button onClick={() => {
-      console.log(LoadingStatus[view.loadingStatus])
-    }}></button>
     <Addbt onClick={() => {
       const newTipe = newTipeState()
       dispatch(addTipe(newTipe))
@@ -154,7 +172,7 @@ function TipeList (props: TipeListProps) {
         />
       ))
     }
-    <Loading id="loading-message">
+    <Loading ref={ref}>
       {LoadingMessage(view.loadingStatus, view.connectedStatus)}
     </Loading>
   </List>
