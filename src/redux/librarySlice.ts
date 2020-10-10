@@ -217,23 +217,6 @@ export const {
 } = librarySlice.actions
 export const selectLibrary = (state: RootState) => state.library
 
-export const loadFirstTipesFromFirebase = async (dispatch: Dispatch<any>) => {
-  return new Promise((resolve) => {
-    doc.collection('tipes')
-      .where('is', '==', 'tipe')
-      .orderBy('createDate', 'desc')
-      .limit(5)
-      .get().then((querySnapshot) => {
-        querySnapshot.forEach((doc) => {
-          dispatch(loadTipe(doc.data() as TipeState))
-        })
-      }).then(() => {
-        window.scrollTo(0, document.body.scrollHeight)
-        resolve()
-      })
-  })
-}
-
 export const loadTipesIncementallyFromFirebase = async (dispatch: Dispatch<any>) => {
   return new Promise((resolve) => {
     if (!doc) return
@@ -263,6 +246,7 @@ export const loadTipesIncementallyFromFirebase = async (dispatch: Dispatch<any>)
     })
   })
 }
+
 export const loadEveryTipesFromFirebase = async (dispatch: Dispatch<any>) => {
   return new Promise((resolve) => {
     doc.collection('tipes')
