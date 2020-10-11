@@ -25,6 +25,7 @@ import IconAddThread from './icons/IconAddThread'
 import IconThreadMore from './icons/IconThreadMore'
 import IconForward from './icons/IconForward'
 import { Redirect } from 'react-router-dom'
+import { spawn } from 'child_process'
 
 const TipeContainer = styled.div`
   padding: 0 32px;
@@ -57,17 +58,39 @@ const ThreadBar = styled.div`
   display: flex;
   align-items: center;
   color: ${props => props.theme.textGrey};
+  overflow: hidden;
+  font-size: 13px;
   svg {
-    width: 16px;
+    flex-grow: 0;
+    flex-shrink: 0;
+    flex-basis: 16px;
     fill: ${props => props.theme.textGrey};
   }
   p {
     margin: 0 0 0 8px;
     color: ${props => props.theme.textGrey};
+    white-space: nowrap;
+  }
+  div {
+    margin: 0;
+    color: ${props => props.theme.textGrey};
+    overflow: hidden;
+    display: flex;
   }
 `
-const PreviousTipePreview = styled.p`
+const PreviousTipePreview = styled.div`
   flex-grow: 1;
+  flex-shrink: 1;
+  overflow: hidden;
+  p {
+    margin: 0 0 0 8px;
+  }
+  .previous-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex-grow: 1;
+    white-space: nowrap;
+  }
 `
 const Titles = styled.div`
   width: 30%;
@@ -129,7 +152,7 @@ const ButtonWithIcon = styled.button`
   cursor: pointer;
   margin-bottom: 24px;
   height: 1em;
-  p {
+  p, div {
     padding: 0;
     margin: 0;
     padding-right: 8px;
@@ -161,6 +184,9 @@ interface TipeProps {
 const Tipe = React.forwardRef<Editor, TipeProps>((props: TipeProps, ref: any) => {
   const library = useSelector(selectLibrary)
   const dispatch = useDispatch()
+
+  const threadOfThisTipe = library.tipes[props.index].thread ? library.threads.find((element) => { return element.id === library.tipes[props.index].thread }) : null
+  const indexInThread = threadOfThisTipe ? threadOfThisTipe.children.findIndex((element) => { return element == library.tipes[props.index].id }) : null
 
   const editorRef = ref
   useEffect(() => {
@@ -267,17 +293,23 @@ const Tipe = React.forwardRef<Editor, TipeProps>((props: TipeProps, ref: any) =>
   return <TipeContainer>
     {redirect && <Redirect push to={redirectPath} />}
     <Texts>
-      {(library.tipes[props.index].thread && props.indexOfThisThread === -1) &&
+      {(threadOfThisTipe && props.indexOfThisThread === -1) &&
         <ThreadBar
           onClick={() => handleRedirect('/thread/' + library.tipes[props.index].thread)}>
           <IconThread />
-          <p>スレッド</p>
-          <p>•</p>
-          <PreviousTipePreview>
-            { library.threads.find((element) => { return library.tipes[props.index].thread === element.id })?.children.findIndex((element) => { return element === library.tipes[props.index].id }) === 0
-              ? <span>スレッド最初</span>
-              : <span>スレッド最初でない</span>}
-          </PreviousTipePreview>
+          <p>{threadOfThisTipe?.title === ''
+            ? <span>スレッド</span>
+            : <span>{threadOfThisTipe.title}</span>}
+          </p>
+          { threadOfThisTipe?.children.findIndex((element) => { return element === library.tipes[props.index].id }) === threadOfThisTipe.children.length - 1
+            ? <PreviousTipePreview></PreviousTipePreview>
+            : <PreviousTipePreview>
+              <p>•</p>
+              <p className="previous-text">{indexInThread &&
+              library.tipes.find((element) => {
+                return element.id === threadOfThisTipe.children[indexInThread + 1]
+              })?.text}</p></PreviousTipePreview>
+          }
           <IconForward />
         </ThreadBar>
       }
@@ -322,6 +354,7 @@ const Tipe = React.forwardRef<Editor, TipeProps>((props: TipeProps, ref: any) =>
                 childIndexInTipes: props.index,
                 value: library.tipes[props.index].id
               }))
+              dispatch(pushTipeToFirebase(props.index))
               dispatch(pushThreadToFirebase(0))
               handleRedirect('/thread/' + newThread.id)
             }}>

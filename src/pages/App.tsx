@@ -21,7 +21,7 @@ import {
   loadFromFirebase,
   newTipeState,
   addTipe,
-  migrate, loadTipesIncementallyFromFirebase, loadThreadsFromFirebase
+  migrate, loadTipesIncrementallyFromFirebase, loadThreadsFromFirebase
 } from '../redux/librarySlice'
 import {
   selectView,
@@ -76,32 +76,14 @@ function App () {
   const dispatch = useDispatch()
   const reduxDispatch = useReduxDispatch()
   const view = useSelector(selectView)
-
-  const loadFullData = async (entries: any, observer: any) => {
-    if (view.loadingStatus !== (LoadingStatus.loaded || LoadingStatus.migrating)) {
-      entries.forEach(async (entry: any) => {
-        if (entry.intersectionRatio > 0) {
-          const prevDistanceFromBottom = document.body.scrollHeight - window.pageYOffset
-          await loadEveryTipesFromFirebase(dispatch)
-          console.log('load full data')
-          window.scrollTo(0, document.body.scrollHeight - prevDistanceFromBottom)
-          dispatch(loadFromFirebase())
-          console.log('loading from firebase')
-          if (view.connectedStatus !== ConnectedStatus.disconnected) {
-            dispatch(setLoadingStatus(LoadingStatus.loaded))
-          }
-        }
-      })
-    }
-  }
-
   const connectedRef = firebase.database().ref('.info/connected')
+
   connectedRef.on('value', function (snap) {
     if (snap.val() === true) {
       dispatch(setConnectedStatus(ConnectedStatus.connected))
       if (view.loadingStatus === LoadingStatus.loading) {
         // load initial data (even if loadingmessage is not visible)
-        reduxDispatch(loadThreadsFromFirebase()).then(() => reduxDispatch(loadTipesIncementallyFromFirebase()).then(() => {
+        reduxDispatch(loadThreadsFromFirebase()).then(() => reduxDispatch(loadTipesIncrementallyFromFirebase()).then(() => {
           dispatch(setLoadingStatus(LoadingStatus.firstDataLoaded))
         }))
       }
@@ -112,6 +94,7 @@ function App () {
   useEffect(() => {
     const newTipe = newTipeState()
     dispatch(addTipe(newTipe))
+    window.scrollTo(0, document.body.scrollHeight)
   }, [])
 
   const [isDark, setIsDark] = useState<boolean>(true)
@@ -126,10 +109,16 @@ function App () {
         const doc = await firestore.collection('users').doc(user.uid).get()
         if (doc.exists && doc.data()?.migrated !== true) {
           console.log('Needs migration')
-          dispatch(setLoadingStatus(LoadingStatus.migrating))
-          await migrate(doc, dispatch)
-          await firestore.collection('users').doc(user.uid).set({ migrated: true }, { merge: true })
-          dispatch(setLoadingStatus(LoadingStatus.loaded))
+          reduxDispatch(setLoadingStatus(LoadingStatus.migrating))
+          setTimeout(async () => {
+            console.log('migration start')
+            await migrate(doc, dispatch)
+            await firestore.collection('users').doc(user.uid).set({ migrated: true }, { merge: true })
+            dispatch(setLoadingStatus(LoadingStatus.loaded))
+            console.log('migration finished')
+          }, 1000)
+        } else {
+          dispatch(setLoadingStatus(LoadingStatus.loading))
         }
       }
     }

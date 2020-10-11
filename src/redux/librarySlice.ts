@@ -12,7 +12,6 @@ import { LoadingStatus, setLoadingStatus } from './viewSlice'
 
 let user: string | undefined
 let doc: firebase.firestore.DocumentReference
-const lastDoc: firebase.firestore.QueryDocumentSnapshot<firebase.firestore.DocumentData> | null = null
 firebase.auth().onAuthStateChanged((thisUser) => {
   console.log('in library: ' + thisUser?.uid)
   if (thisUser) {
@@ -130,14 +129,19 @@ export const librarySlice = createSlice({
       }
     },
     refreshSessionIdOfTipe: (state, action: PayloadAction<number>) => {
-      console.log(action.payload)
       if (state.tipes[action.payload]) { state.tipes[action.payload].lastSessionId = state.sessionId }
     },
     removeTipe: (state, action: PayloadAction<number>) => {
       const thisTipe = state.tipes[action.payload]
       if (thisTipe && thisTipe.thread) {
-        const thisThreadChildren = state.threads.find((element) => { return element.id === thisTipe.thread })?.children
-        if (thisThreadChildren) thisThreadChildren.splice(thisThreadChildren.indexOf(thisTipe.id), 1)
+        const thisThread = state.threads.find((element) => { return element.id === thisTipe.thread })
+        if (thisThread) {
+          thisThread.children.splice(thisThread.children.indexOf(thisTipe.id), 1)
+          if (thisThread.children.length === 0) {
+            removeThreadFromFirebase(thisThread.id)
+            state.threads.splice(state.threads.indexOf(thisThread), 1)
+          }
+        }
       }
       state.tipes.splice(action.payload, 1)
     },
@@ -271,7 +275,7 @@ export const loadThreadsFromFirebase = () => {
   }
 }
 
-export const loadTipesIncementallyFromFirebase = () => {
+export const loadTipesIncrementallyFromFirebase = () => {
   return (dispatch: Dispatch<any>, getState: () => {library: LibraryState}) => {
     return new Promise((resolve) => {
       if (!doc) return

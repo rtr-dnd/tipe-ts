@@ -15,7 +15,7 @@ import {
   addTipe,
   addTipeToThread,
   newTipeState,
-  loadTipesIncementallyFromFirebase,
+  loadTipesIncrementallyFromFirebase,
   pushThreadToFirebase
 } from '../redux/librarySlice'
 import {
@@ -107,7 +107,7 @@ function TipeList (props: TipeListProps) {
       console.log(LoadingStatus[view.loadingStatus])
       if (view.loadingStatus !== (LoadingStatus.loaded || LoadingStatus.migrating)) {
         const prevDistanceFromBottom = document.body.scrollHeight - window.pageYOffset
-        reduxDispatch(loadTipesIncementallyFromFirebase()).then(() => {
+        reduxDispatch(loadTipesIncrementallyFromFirebase()).then(() => {
           window.scrollTo(0, document.body.scrollHeight - prevDistanceFromBottom)
         })
       }
